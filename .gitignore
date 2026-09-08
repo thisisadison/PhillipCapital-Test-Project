@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+.env
+.env.local
+.env*.local
+
+# Generated digests are runtime data, not source. Keep the directory,
+# ignore its contents (see data/digests/.gitkeep).
+/data/digests/*
+!/data/digests/.gitkeep
+
+.DS_Store
+*.log
+coverage/

@@ -1,0 +1,28 @@
+name: Weekly digest
+
+# Monday 06:00 Asia/Singapore. GitHub Actions schedules are UTC and SGT is
+# UTC+8, so this fires Sunday 22:00 UTC.
+on:
+  schedule:
+    - cron: "0 22 * * 0"
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trigger the digest run
+        env:
+          DIGEST_URL: ${{ secrets.DIGEST_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "${DIGEST_URL}" ] || [ -z "${CRON_SECRET}" ]; then
+            echo "DIGEST_URL and CRON_SECRET must both be set as repository secrets." >&2
+            exit 1
+          fi
+          # --fail-with-body so a non-2xx response fails the job *and* prints why.
+          curl --fail-with-body --silent --show-error --max-time 900 \
+            -X POST "${DIGEST_URL%/}/api/cron" \
+            -H "Authorization: Bearer ${CRON_SECRET}"

@@ -1,0 +1,234 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Theme
+   ---------------------------------------------------------------------------
+   One set of semantic tokens, defined once for light and overridden once for
+   dark. Components never name a raw colour, so the two themes cannot drift.
+
+   Colour carries no decoration here: the page is ink on paper, and hue appears
+   only where it means something (a failed run, a focus ring).
+   ------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  --canvas: #faf9f7;
+  --surface: #ffffff;
+  --surface-sunken: #f3f2ee;
+
+  --ink: #17171a;
+  --ink-muted: #56565f;
+  /* Metadata is 12px, so this has to clear 4.5:1 against canvas, surface and
+     sunken alike — it is the quietest the palette can go and stay readable. */
+  --ink-faint: #6c6c76;
+
+  --line: #e4e2dc;
+  --line-strong: #cdcbc3;
+
+  --accent: #3a5a7d;
+  --accent-ink: #2c4763;
+
+  --warn-bg: #fdf6e7;
+  --warn-line: #e7d3a1;
+  --warn-ink: #6b5518;
+
+  --danger-bg: #fcf0ee;
+  --danger-line: #e9c2bb;
+  --danger-ink: #7a2f21;
+
+  --shadow-card: 0 1px 2px rgb(23 23 26 / 0.04), 0 8px 24px -16px rgb(23 23 26 / 0.18);
+
+  --font-display: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --measure: 34rem;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --canvas: #101013;
+  --surface: #17171b;
+  --surface-sunken: #1d1d22;
+
+  --ink: #eeeef2;
+  --ink-muted: #a4a4ae;
+  --ink-faint: #8a8a95;
+
+  --line: #2a2a31;
+  --line-strong: #3b3b44;
+
+  --accent: #8fb4d9;
+  --accent-ink: #a9c7e6;
+
+  --warn-bg: #241f13;
+  --warn-line: #4a3f22;
+  --warn-ink: #e2c98a;
+
+  --danger-bg: #261715;
+  --danger-line: #4d2a24;
+  --danger-ink: #e9a99c;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -16px rgb(0 0 0 / 0.6);
+}
+
+/* Viewers who never touch the toggle follow their OS. The [data-theme]
+   attribute above always wins, in both directions. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --canvas: #101013;
+    --surface: #17171b;
+    --surface-sunken: #1d1d22;
+
+    --ink: #eeeef2;
+    --ink-muted: #a4a4ae;
+    --ink-faint: #8a8a95;
+
+    --line: #2a2a31;
+    --line-strong: #3b3b44;
+
+    --accent: #8fb4d9;
+    --accent-ink: #a9c7e6;
+
+    --warn-bg: #241f13;
+    --warn-line: #4a3f22;
+    --warn-ink: #e2c98a;
+
+    --danger-bg: #261715;
+    --danger-line: #4d2a24;
+    --danger-ink: #e9a99c;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -16px rgb(0 0 0 / 0.6);
+  }
+}
+
+/* Expose the tokens to Tailwind so utilities read `bg-surface`, `text-ink`. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------- */
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* These sit in the components layer so a Tailwind colour utility on the same
+   element still wins — an unlayered rule would beat every utility and silently
+   override `text-ink` wherever the two are combined. */
+@layer components {
+  /* Metadata is set in monospace throughout: dates, counts, source labels.
+     It gives the page a second, quieter voice without adding colour. */
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-faint);
+  }
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.011em;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Motion — a single entrance, and nothing that repeats or draws the eye back.
+   ------------------------------------------------------------------------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 480ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Theme-conditional content
+   ---------------------------------------------------------------------------
+   Lets a control reflect the resolved theme without React state — which the
+   server cannot know when the reader is on the system default.
+   ------------------------------------------------------------------------- */
+
+.dark-only {
+  display: none;
+}
+
+:root[data-theme="dark"] .dark-only {
+  display: block;
+}
+
+:root[data-theme="dark"] .light-only {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .dark-only {
+    display: block;
+  }
+
+  :root:not([data-theme="light"]) .light-only {
+    display: none;
+  }
+}

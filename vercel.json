@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron",
+      "comment": "Monday 06:00 Asia/Singapore. Vercel cron schedules are UTC (SGT is UTC+8), so Sunday 22:00 UTC.",
+      "schedule": "0 22 * * 0"
+    }
+  ]
+}
