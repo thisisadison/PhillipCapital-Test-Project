@@ -1,29 +1,29 @@
 /**
  * Runs the pipeline from the command line.
  *
- * This is the scheduled entry point for deployments that run cron outside the
- * web app (a systemd timer, a Kubernetes CronJob, GitHub Actions). Hosts with
- * their own scheduler can call `POST /api/cron` instead — both paths go through
- * the same `generateDigest`, so there is only ever one pipeline.
+ * The scheduled entry point for deployments that run cron outside the web app
+ * (a systemd timer, a Kubernetes CronJob, GitHub Actions). Hosts with their own
+ * scheduler can call `POST /api/cron` instead — both go through the same
+ * `generateDigest`, so there is only ever one pipeline.
  *
  *   npx tsx scripts/generate-digest.ts [--manual]
  */
-import { generateDigest } from "../src/lib/digest/pipeline";
-import { FileDigestStore } from "../src/lib/store/fileStore";
+import { generateDigest } from "../src/server/service/DigestService";
+import { FileDigestRepository } from "../src/server/repository/FileDigestRepository";
 
 async function main() {
   const trigger = process.argv.includes("--manual") ? "manual" : "scheduled";
-  const store = new FileDigestStore(process.env.DIGEST_DATA_DIR?.trim() || "./data");
+  const repository = new FileDigestRepository(process.env.DIGEST_DATA_DIR?.trim() || "./data");
 
   console.log(`Starting a ${trigger} digest run…`);
-  const { digest, run } = await generateDigest(store, { trigger });
+  const { digest, run } = await generateDigest(repository, { trigger });
 
   console.log(`\nPublished the edition of ${digest.date}:`);
   console.log(`  ${digest.entries.length} entries from ${digest.meta.sourcesConsulted} publishers`);
   console.log(`  ${digest.summary}`);
 
-  if (digest.meta.ungroundedEntriesDropped > 0) {
-    console.log(`  Dropped ${digest.meta.ungroundedEntriesDropped} entries that failed grounding.`);
+  if (digest.meta.entriesRejected > 0) {
+    console.log(`  ${digest.meta.entriesRejected} draft entries were rejected.`);
   }
   for (const warning of run.warnings) {
     console.warn(`  warning: ${warning}`);

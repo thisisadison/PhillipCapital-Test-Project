@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { SiteHeader } from "@/components/SiteHeader";
-import { DigestView } from "@/components/DigestView";
-import { formatEditionDate } from "@/lib/digest/dates";
-import { getDigestStore } from "@/lib/store";
+import { SiteHeader } from "@/ui/components/SiteHeader";
+import { DigestView } from "@/ui/components/DigestView";
+import { formatEditionDate } from "@/shared/dates";
+import { getDigestRepository } from "@/server/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -17,15 +17,15 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function ArchivedDigestPage({ params }: Params) {
   const { date } = await params;
-  const digest = await getDigestStore().getByDate(date);
+  const digest = await getDigestRepository().findByDate(date);
 
   if (!digest) notFound();
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 pb-24 sm:px-8">
-      <SiteHeader showArchiveLink={false} />
+      <SiteHeader current="/archive" />
 
-      <main className="pt-8 sm:pt-12">
+      <main className="pt-10 sm:pt-14">
         <nav className="mb-8">
           <Link
             href="/archive"

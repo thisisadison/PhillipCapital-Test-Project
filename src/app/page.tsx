@@ -1,8 +1,8 @@
-import { SiteHeader } from "@/components/SiteHeader";
-import { DigestView } from "@/components/DigestView";
-import { EmptyState } from "@/components/EmptyState";
-import { deriveStatus } from "@/lib/digest/status";
-import { getDigestStore } from "@/lib/store";
+import { SiteHeader } from "@/ui/components/SiteHeader";
+import { DigestView } from "@/ui/components/DigestView";
+import { EmptyState } from "@/ui/components/EmptyState";
+import { deriveStatus } from "@/shared/status";
+import { getDigestRepository } from "@/server/repository";
 
 /**
  * The digest is read from storage at request time, never baked in at build
@@ -12,14 +12,17 @@ import { getDigestStore } from "@/lib/store";
 export const dynamic = "force-dynamic";
 
 export default async function DigestPage() {
-  const store = getDigestStore();
-  const [digest, lastRun] = await Promise.all([store.getLatest(), store.getLastRun()]);
+  const repository = getDigestRepository();
+  const [digest, lastRun] = await Promise.all([
+    repository.findLatest(),
+    repository.findLastRun(),
+  ]);
   const status = deriveStatus(digest, lastRun);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 pb-24 sm:px-8">
-      <SiteHeader />
-      <main className="pt-8 sm:pt-12">
+      <SiteHeader current="/" />
+      <main className="pt-10 sm:pt-14">
         {digest ? (
           <DigestView digest={digest} notice={status.notice} />
         ) : (

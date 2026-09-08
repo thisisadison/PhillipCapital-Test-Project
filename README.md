@@ -1,11 +1,11 @@
 # Market & Tech Trends Digest
 
-A weekly briefing for the PhillipCapital Internal Audit team on audit automation, AI in internal
-audit, and the regulatory developments behind them.
+A weekly briefing for the PhillipCapital Internal Audit team: what changed in audit technology,
+regulation, financial crime and operational resilience, and what the team should do about it.
 
 A scheduled job researches the week, an editing pass turns the findings into a one-page digest, and
-the site serves the stored result. The team opens one page and, within seconds, knows what changed
-in their world last week.
+the site serves the stored result. The UI performs no research logic — it reads a `Digest` and
+renders it.
 
 Everything the tool touches is public market and industry information. There is no audit data in it.
 
@@ -17,41 +17,50 @@ Everything the tool touches is public market and industry information. There is 
   Monday 06:00 SGT
         │
         ▼
-  ┌───────────────┐   web search, restricted to    ┌──────────────┐
-  │   research    │──▶ an allowlist of primary  ──▶│  candidate   │
-  │  (3 parallel) │    and established sources     │   sources    │
-  └───────────────┘                                └──────┬───────┘
-        │ prose findings per category                     │
-        ▼                                                 │
-  ┌───────────────┐   structured output against            │
-  │  synthesis    │──▶ the digest schema                   │
-  └───────┬───────┘                                        │
-          │ draft entries                                  │
-          ▼                                                ▼
-  ┌────────────────────────────────────────────────────────────┐
-  │  grounding: drop any entry whose URL was never retrieved    │
-  └───────────────────────────┬────────────────────────────────┘
+  ┌────────────────┐  web search, restricted to    ┌──────────────────┐
+  │    research    │─▶ an allowlist of primary  ──▶│ source catalogue │
+  │ (5 in parallel)│   and established sources     │  S01, S02, S03…  │
+  └────────┬───────┘                               └────────┬─────────┘
+           │ prose findings per section                     │
+           ▼                                                │
+  ┌────────────────┐  structured output; the model          │
+  │   synthesis    │─▶ cites a source *id*, never a URL     │
+  └────────┬───────┘                                        │
+           │ draft entries                                  │
+           ▼                                                ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  normalise: resolve ids to real URLs, coerce what can be fixed,  │
+  │  reject individual entries that cannot be trusted                │
+  └───────────────────────────┬─────────────────────────────────────┘
                               ▼
-                    ┌───────────────────┐
-                    │  store (per date) │──▶  the page just reads this
-                    └───────────────────┘
+                   ┌──────────────────────┐
+                   │ repository (per date)│──▶ the page just reads this
+                   └──────────────────────┘
 ```
 
 Three ideas carry most of the quality:
 
 **Source policy is structural, not editorial.** Search is restricted to an allowlist of regulators,
-standard setters, professional bodies, Big 4 insight pages and established trade press
-(`src/lib/digest/sources.ts`). An SEO listicle restating a MAS circular can never enter the
-candidate set, so the synthesis step never has to be asked to prefer the regulator over the
-aggregator.
+standard setters, professional bodies, Big 4 insight pages, audit-technology vendors and established
+trade press (`server/service/research/sourceCatalogue.ts`). A search-optimised article restating a
+MAS circular can never enter the candidate set, so the synthesis step never has to be asked to prefer
+the regulator over the aggregator. The same catalogue assigns each entry its publisher type, so the
+source-mix chart is derived from data rather than from the model's opinion.
 
-**Every link is grounded.** The synthesis model must copy source URLs verbatim from the retrieved
-results, and `groundEntries` enforces it — an entry whose URL was not returned by the search step is
-discarded, and the count of discarded entries is printed in the page footer. A digest is only as
-trustworthy as its links.
+**The model cannot write a URL.** It picks from a numbered catalogue of pages the search actually
+returned, and the link is filled in afterwards. A fabricated or mistyped link is not something that
+gets caught — it is something that cannot be expressed.
 
-**The schema does part of the editing.** A synthesis under 120 characters fails validation, which
-makes "if it only restates the headline, cut it" a rule rather than a hope.
+**Partial failure is designed for.** A section that fails costs that section; an entry that cannot be
+trusted costs that entry. The run fails only when there is genuinely nothing to publish.
+
+> **A note on structured outputs.** The API does not enforce `enum`, `minLength`, `maxLength` or
+> `pattern` — the SDK downgrades those keywords into schema *descriptions*, so they steer the model
+> but are invisible to the validator. An earlier version of this pipeline put its editorial rules in
+> the response schema and parsed strictly, which meant one capitalised category or one slightly short
+> sentence destroyed the entire week's digest. The wire schema is now deliberately permissive
+> (`synthesis/draftSchema.ts`) and every rule lives in `synthesis/normalise.ts`, which repairs what it
+> can and rejects one entry at a time.
 
 ## Freshness and failure
 
@@ -66,7 +75,6 @@ The generation timestamp is on the page unconditionally, in every state. On top 
 | `empty` | Nothing has ever been published | An explanation of what will appear and when — never a placeholder edition |
 
 An edition is shown as current only when the most recent pipeline attempt actually produced it.
-Stale content is never dressed up as fresh.
 
 ## Running it
 
@@ -79,7 +87,7 @@ npm run dev
 With no digest stored, the site shows the empty state. To produce one:
 
 ```bash
-npm run digest:generate        # a full run: ~2-4 minutes, real API spend
+npm run digest:generate        # a full run: a few minutes, real API spend
 ```
 
 | Command | |
@@ -99,53 +107,54 @@ npm run digest:generate        # a full run: ~2-4 minutes, real API spend
 | `CRON_SECRET` | for scheduling | Bearer secret for `POST /api/cron`. Without it that route returns 503 rather than exposing an unauthenticated trigger. |
 | `DIGEST_ACCESS_CODE` | recommended | The shared access code. Unset means no gate — intended for local development. |
 | `DIGEST_DATA_DIR` | no | Where digests and the run log are written. Default `./data`. |
-| `DIGEST_TIMEZONE` | no | Default `Asia/Singapore`. Edition dates and timestamps are rendered in it. |
+| `DIGEST_TIMEZONE` | no | Default `Asia/Singapore`. |
 | `DIGEST_MANUAL_COOLDOWN_MINUTES` | no | Default 30. |
 | `DIGEST_MANUAL_RUNS_PER_DAY` | no | Default 6. |
 
 ### Scheduling
 
-Default cadence is **Monday 06:00 Asia/Singapore** — the digest is on screen before the week starts.
-Both supplied schedules fire at Sunday 22:00 UTC, which is the same moment.
+Default cadence is **Monday 06:00 Asia/Singapore**. Both supplied schedules fire at Sunday 22:00 UTC,
+which is the same moment.
 
 - `vercel.json` — Vercel Cron calling `/api/cron`.
 - `.github/workflows/weekly-digest.yml` — GitHub Actions calling the same route. Set the
   `DIGEST_URL` and `CRON_SECRET` repository secrets.
-- Anything else that can issue an authenticated request on a timer, or run
-  `npm run digest:generate` directly.
+- Anything else that can issue an authenticated request on a timer, or run `npm run digest:generate`.
 
 ### Access
 
 One shared code, exchanged at `/unlock` for an HMAC-signed httpOnly cookie that `src/proxy.ts`
-checks. There are no accounts and no roles: this is public information for one internal team, and
-anything heavier would be surface area for no benefit. Rotating `DIGEST_ACCESS_CODE` invalidates
-every issued cookie.
-
-`/api/cron` sits outside the gate and authenticates with its own bearer secret, so the scheduler
-never needs the team's code.
+checks. No accounts, no roles: this is public information for one internal team. Rotating
+`DIGEST_ACCESS_CODE` invalidates every issued cookie. `/api/cron` sits outside the gate with its own
+bearer secret, so the scheduler never needs the team's code.
 
 ## Layout
 
+Layered, with the Next.js routes acting as thin controllers over a service layer:
+
 ```
 src/
-  lib/
-    digest/
-      categories.ts   the three sections, and the brief that steers research for each
-      sources.ts      the domain allowlist — the main source-quality lever
-      research.ts     stage 1: search within the allowlist, return findings + retrieved URLs
-      synthesize.ts   stage 2: edit the findings into the digest schema
-      grounding.ts    discard entries whose URL was never retrieved; dedupe
-      pipeline.ts     orchestration, and the run record written on every attempt
-      status.ts       how an edition should be presented (pure)
-      schema.ts       the digest contract, shared by pipeline, store and UI
-    store/            DigestStore interface + flat-file implementation
-    rateLimit.ts      manual-trigger limits, derived from the persisted run log (pure)
-    access/           the shared-code gate
-  app/                routes; the UI only ever reads structured digest data
-  components/
+  app/                    routes — controllers only; no business logic
+    api/{access,cron,regenerate}/
+    archive/ · method/ · unlock/
+  server/
+    config/               runtime configuration
+    domain/               the model: categories, Digest, DigestEntry, DigestRun
+    repository/           DigestRepository interface + flat-file implementation
+    security/             the shared-code access gate
+    service/
+      research/           stage 1 — search within the allowlist
+      synthesis/          stage 2 — draft, source index, normalisation
+      DigestService.ts    orchestration
+      RateLimitService.ts manual-trigger limits
+  shared/                 pure, safe on both sides: dates, stats, freshness
+  ui/
+    charts/               visualisations + the validated palette
+    components/
 ```
 
-The UI performs no research logic. It reads a `Digest` and renders it.
+The dependency direction is one-way: `app` → `ui`/`server`, `server/service` → `server/domain` and
+`server/repository`. Nothing in `domain` imports a service.
 
 ### Storage
 
@@ -155,16 +164,26 @@ cannot lose each other's records.
 
 This suits a single long-lived instance with a persistent volume. It is **not** suitable for a
 read-only or per-request filesystem such as stock serverless — point `DIGEST_DATA_DIR` at a mounted
-volume, or implement `DigestStore` against a database. That interface is the only thing the rest of
-the code knows about.
+volume, or write another `DigestRepository`. That interface is the only thing the rest of the code
+knows about.
 
 ## Design
 
 Card-based, CSS-variable theming with light and dark defined together, a serif display face against
-a system sans body with monospace reserved for dates and metadata. Colour carries no decoration: the
-page is ink on paper, and hue appears only where it means something — a failed run, a focus ring.
+a system sans body, monospace for dates and metadata.
 
-Fonts are system stacks, so there is no webfont fetch, no layout shift and no third-party request.
-Swapping in a licensed face is a change to `--font-display` in `src/app/globals.css`.
+Colour is reserved for data. The prose stays monochrome; hue appears in the charts, as the section
+key on each card, and nowhere else. The categorical palette is fixed per section — a colour always
+means the same thing and never shifts because a section was empty that week — and was validated
+against this page's own surfaces in both themes (lightness band, chroma floor, colour-vision-
+deficiency separation, normal-vision separation, contrast). Three light-mode slots sit below 3:1
+against the surface, so every chart ships direct labels and a screen-reader table rather than relying
+on colour alone.
 
-Every text/background pair in both themes clears WCAG AA (4.5:1).
+Publisher marks try the publisher's own favicon over a generated monogram; the monogram renders
+first and always, so a blocked network degrades to something designed rather than to an empty box.
+
+Fonts are system stacks — no webfont fetch, no layout shift, no third-party request. Swapping in a
+licensed face is a change to `--font-display` in `src/app/globals.css`.
+
+Every text/background pair in both themes clears WCAG AA.

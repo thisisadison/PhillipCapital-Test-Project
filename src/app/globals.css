@@ -37,6 +37,30 @@
   --danger-line: #e9c2bb;
   --danger-ink: #7a2f21;
 
+
+  /* --- Data-visualisation palette -----------------------------------------
+     Validated with the dataviz skill's checker against this page's own card
+     surface, in both modes: lightness band, chroma floor, adjacent-pair CVD
+     separation and normal-vision separation all pass. Three light slots sit
+     below 3:1 against the surface, so every chart here ships direct labels and
+     a table view rather than leaning on colour alone.
+
+     A slot is bound to a category for the life of the product: a colour always
+     means the same section, and never shifts because a section was empty. --- */
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+
+  /* Ordinal ramp, one hue, light to dark — impact is ordered, not categorical. */
+  --impact-watch: #86b6ef;
+  --impact-plan: #3987e5;
+  --impact-act: #184f95;
+
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+
   --shadow-card: 0 1px 2px rgb(23 23 26 / 0.04), 0 8px 24px -16px rgb(23 23 26 / 0.18);
 
   --font-display: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
@@ -72,6 +96,20 @@
   --danger-line: #4d2a24;
   --danger-ink: #e9a99c;
 
+
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+
+  --impact-watch: #184f95;
+  --impact-plan: #3987e5;
+  --impact-act: #86b6ef;
+
+  --chart-grid: #2c2c2a;
+  --chart-axis: #383835;
+
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -16px rgb(0 0 0 / 0.6);
 }
 
@@ -103,7 +141,21 @@
     --danger-line: #4d2a24;
     --danger-ink: #e9a99c;
 
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -16px rgb(0 0 0 / 0.6);
+  
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+
+  --impact-watch: #184f95;
+  --impact-plan: #3987e5;
+  --impact-act: #86b6ef;
+
+  --chart-grid: #2c2c2a;
+  --chart-axis: #383835;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -16px rgb(0 0 0 / 0.6);
   }
 }
 
@@ -119,6 +171,8 @@
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);

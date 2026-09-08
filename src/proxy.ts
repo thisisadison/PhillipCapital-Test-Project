@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ACCESS_COOKIE, isAccessGateEnabled, isValidAccessCookie } from "@/lib/access/token";
+import { ACCESS_COOKIE, isAccessGateEnabled, isValidAccessCookie } from "@/server/security/accessGate";
 
 /**
  * The access gate, applied before any route renders.

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { generateDigest } from "@/lib/digest/pipeline";
-import { runExclusive } from "@/lib/digest/runGuard";
-import { getDigestStore } from "@/lib/store";
+import { generateDigest } from "@/server/service/DigestService";
+import { runExclusive } from "@/server/service/runGuard";
+import { getDigestRepository } from "@/server/repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ async function handle(request: Request) {
   }
 
   const outcome = await runExclusive(() =>
-    generateDigest(getDigestStore(), { trigger: "scheduled" }),
+    generateDigest(getDigestRepository(), { trigger: "scheduled" }),
   );
 
   if (outcome.status === "busy") {

@@ -5,7 +5,7 @@ import {
   isAccessGateEnabled,
   isValidAccessCode,
   mintAccessToken,
-} from "@/lib/access/token";
+} from "@/server/security/accessGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

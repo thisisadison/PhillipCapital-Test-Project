@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { MissingApiKeyError } from "@/lib/digest/client";
-import { generateDigest } from "@/lib/digest/pipeline";
-import { runExclusive } from "@/lib/digest/runGuard";
-import { evaluateManualTrigger } from "@/lib/rateLimit";
-import { getDigestStore } from "@/lib/store";
+import { MissingApiKeyError } from "@/server/service/AnthropicClient";
+import { generateDigest } from "@/server/service/DigestService";
+import { runExclusive } from "@/server/service/runGuard";
+import { evaluateManualTrigger } from "@/server/service/RateLimitService";
+import { getDigestRepository } from "@/server/repository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,9 +21,9 @@ const RUN_HISTORY_WINDOW = 40;
  * because this is a shared tool and each run costs real API spend.
  */
 export async function POST() {
-  const store = getDigestStore();
+  const repository = getDigestRepository();
 
-  const decision = evaluateManualTrigger(await store.listRuns(RUN_HISTORY_WINDOW));
+  const decision = evaluateManualTrigger(await repository.listRuns(RUN_HISTORY_WINDOW));
   if (!decision.allowed) {
     return NextResponse.json(
       { error: decision.reason, retryAfterSeconds: decision.retryAfterSeconds },
@@ -32,7 +32,7 @@ export async function POST() {
   }
 
   try {
-    const outcome = await runExclusive(() => generateDigest(store, { trigger: "manual" }));
+    const outcome = await runExclusive(() => generateDigest(repository, { trigger: "manual" }));
 
     if (outcome.status === "busy") {
       return NextResponse.json(
