@@ -91,18 +91,20 @@ const VENDORS: DomainGroup = {
   ],
 };
 
+/**
+ * Subscription/paywalled outlets are deliberately excluded here, not just
+ * omitted by oversight: the web search tool validates every entry in
+ * `allowed_domains` up front and rejects the *entire* request — all
+ * categories at once, since they share this group — if even one domain
+ * blocks Anthropic's crawler (robots.txt or user-agent rules). FT, Reuters,
+ * Business Times and The Straits Times all do this in practice. If a new
+ * domain added here starts failing every research call with a 400 naming it,
+ * remove it rather than debug around it — there is no way to allow a domain
+ * that refuses the crawler.
+ */
 const PRESS: DomainGroup = {
   type: "press",
-  domains: [
-    "journalofaccountancy.com",
-    "accountingtoday.com",
-    "ft.com",
-    "reuters.com",
-    "businesstimes.com.sg",
-    "straitstimes.com",
-    "complianceweek.com",
-    "cfo.com",
-  ],
+  domains: ["journalofaccountancy.com", "accountingtoday.com", "complianceweek.com", "cfo.com"],
 };
 
 const AI_GOVERNANCE_BODIES: DomainGroup = {
