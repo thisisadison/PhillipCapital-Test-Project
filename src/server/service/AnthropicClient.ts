@@ -1,7 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-/** The model behind both pipeline stages. Recorded on every edition. */
-export const DIGEST_MODEL = "claude-opus-5";
+/**
+ * Research is mostly mechanical — search, extract, summarise into structured
+ * notes — so it runs on Sonnet 5. Synthesis is the actual editorial writing a
+ * reader sees, so it stays on Opus 5, which is the more expensive model.
+ * Splitting the two is most of the cost difference between a run that costs a
+ * few dollars and one that costs a few cents.
+ */
+export const RESEARCH_MODEL = "claude-sonnet-5";
+export const SYNTHESIS_MODEL = "claude-opus-5";
+
+/** How the two-model split is described wherever one string is expected (the stored edition, logs). */
+export const MODEL_DESCRIPTION = `${RESEARCH_MODEL} (research) + ${SYNTHESIS_MODEL} (writing)`;
 
 /**
  * Server-side refusal fallback: if a policy classifier declines a request, the

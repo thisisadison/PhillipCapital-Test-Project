@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { DIGEST_MODEL, FALLBACK_BETA } from "../AnthropicClient";
+import { FALLBACK_BETA, SYNTHESIS_MODEL } from "../AnthropicClient";
+import { formatUsageLine, usageFrom, type UsageTotals } from "../UsageTracking";
 import { CATEGORIES } from "@/server/domain/category";
 import type { CategoryResearch, ResearchWindow } from "../research/ResearchService";
 import { draftSchema, type Draft } from "./draftSchema";
@@ -30,6 +31,7 @@ const SYSTEM_PROMPT = [
 export interface SynthesisResult {
   draft: Draft;
   warnings: string[];
+  usage: UsageTotals;
 }
 
 /**
@@ -45,15 +47,20 @@ export async function synthesizeDigest(
   window: ResearchWindow,
 ): Promise<SynthesisResult> {
   const response = await client.beta.messages.parse({
-    model: DIGEST_MODEL,
+    model: SYNTHESIS_MODEL,
     max_tokens: 16000,
     betas: [FALLBACK_BETA],
     fallbacks: "default",
     thinking: { type: "adaptive" },
+    // This is the actual prose a reader sees, so it stays at high effort even
+    // though research (mechanical search-and-extract) was turned down to
+    // medium — the model and the effort level are two different cost levers.
     output_config: { effort: "high", format: zodOutputFormat(draftSchema) },
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: buildPrompt(research, sources, window) }],
   });
+
+  const usage = usageFrom(response);
 
   if (response.stop_reason === "refusal") {
     throw new Error(
@@ -75,7 +82,9 @@ export async function synthesizeDigest(
     warnings.push("Synthesis hit the output limit; the edition may be incomplete.");
   }
 
-  return { draft: parsed, warnings };
+  console.log(`[synthesis] ${formatUsageLine(usage, SYNTHESIS_MODEL)}`);
+
+  return { draft: parsed, warnings, usage };
 }
 
 function buildPrompt(

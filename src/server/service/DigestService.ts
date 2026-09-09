@@ -5,8 +5,15 @@ import { CATEGORY_IDS, getCategory } from "@/server/domain/category";
 import type { Digest, DigestRun } from "@/server/domain/digest";
 import type { DigestRepository } from "@/server/repository";
 import { addDays, toDateKey } from "@/shared/dates";
-import { DIGEST_MODEL, getAnthropicClient } from "./AnthropicClient";
+import { getAnthropicClient, MODEL_DESCRIPTION } from "./AnthropicClient";
 import { hostnameOf } from "@/shared/url";
+import {
+  addUsage,
+  estimateTotalCostUsd,
+  formatUsd,
+  ZERO_USAGE,
+  type UsageTotals,
+} from "./UsageTracking";
 import {
   researchCategory,
   type CategoryResearch,
@@ -26,6 +33,8 @@ export interface GenerateOptions {
 export interface GenerateResult {
   digest: Digest;
   run: DigestRun;
+  /** Total token usage across every call this run made. Not persisted — logging only. */
+  usage: { research: UsageTotals; synthesis: UsageTotals; estimatedCostUsd: number };
 }
 
 /**
@@ -55,18 +64,23 @@ export async function generateDigest(
     const client = options.client ?? getAnthropicClient();
     const { research, warnings: researchWarnings } = await runResearch(client, window);
 
+    const researchUsage = research.reduce((total, item) => addUsage(total, item.usage), ZERO_USAGE);
+
     const sources = new SourceIndex(research.flatMap((item) => item.sources));
     if (sources.size === 0) {
       throw new Error("The research step retrieved no sources, so there is nothing to cite.");
     }
 
-    const { draft, warnings: synthesisWarnings } = await synthesizeDigest(
+    const { draft, warnings: synthesisWarnings, usage: synthesisUsage } = await synthesizeDigest(
       client,
       research,
       sources,
       window,
     );
     const normalised = normaliseDraft(draft, sources);
+
+    const estimatedCostUsd = estimateTotalCostUsd(researchUsage, synthesisUsage);
+    console.log(`[digest] Estimated run cost: ${formatUsd(estimatedCostUsd)}`);
 
     if (normalised.entries.length === 0) {
       throw new Error(
@@ -84,7 +98,7 @@ export async function generateDigest(
       entries: normalised.entries,
       meta: {
         trigger: options.trigger,
-        model: DIGEST_MODEL,
+        model: MODEL_DESCRIPTION,
         sourcesConsulted: countDistinctHosts(sources.sources.map((source) => source.url)),
         entriesRejected: normalised.rejections.length,
       },
@@ -103,7 +117,7 @@ export async function generateDigest(
     };
     await repository.recordRun(run);
 
-    return { digest, run };
+    return { digest, run, usage: { research: researchUsage, synthesis: synthesisUsage, estimatedCostUsd } };
   } catch (error) {
     const run: DigestRun = {
       id: runId,

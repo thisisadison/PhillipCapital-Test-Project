@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { DIGEST_MODEL, FALLBACK_BETA } from "../AnthropicClient";
+import { FALLBACK_BETA, RESEARCH_MODEL } from "../AnthropicClient";
+import { addUsage, formatUsageLine, usageFrom, ZERO_USAGE, type UsageTotals } from "../UsageTracking";
 import { getCategory, type CategoryDefinition, type CategoryId } from "@/server/domain/category";
 import { ALLOWED_DOMAINS_BY_CATEGORY, MAX_ALLOWED_DOMAINS } from "./sourceCatalogue";
 
@@ -17,6 +18,7 @@ export interface CategoryResearch {
   notes: string;
   sources: RetrievedSource[];
   warnings: string[];
+  usage: UsageTotals;
 }
 
 export interface ResearchWindow {
@@ -26,8 +28,12 @@ export interface ResearchWindow {
   to: string;
 }
 
-/** Guards against a runaway server-tool loop pausing forever. */
-const MAX_PAUSE_CONTINUATIONS = 4;
+/**
+ * Guards against a runaway server-tool loop pausing forever. Each continuation
+ * resends the whole conversation so far, so this is also the main cost lever —
+ * three turns rather than five caps the worst case at 3/5 of what it was.
+ */
+const MAX_PAUSE_CONTINUATIONS = 2;
 const MAX_SEARCHES_PER_CATEGORY = 8;
 
 const SYSTEM_PROMPT = [
@@ -65,16 +71,24 @@ export async function researchCategory(
   const warnings: string[] = [];
   const sources = new Map<string, RetrievedSource>();
   const textParts: string[] = [];
+  let usage: UsageTotals = ZERO_USAGE;
 
   for (let attempt = 0; attempt <= MAX_PAUSE_CONTINUATIONS; attempt += 1) {
     const response = await client.beta.messages.create({
-      model: DIGEST_MODEL,
+      model: RESEARCH_MODEL,
       max_tokens: 16000,
       betas: [FALLBACK_BETA],
       fallbacks: "default",
       thinking: { type: "adaptive" },
-      output_config: { effort: "high" },
-      system: SYSTEM_PROMPT,
+      // Research is mostly tool-calling and extraction, not prose, so medium
+      // effort finds much the same things as high for meaningfully less
+      // thinking-token spend. The actual writing (synthesis) stays high.
+      output_config: { effort: "medium" },
+      // The system prompt is identical on every turn of this loop, and across
+      // every category — caching it means only the first call anywhere in the
+      // run pays full price; every later call, in this category or another,
+      // reads it back at roughly a tenth of the cost.
+      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
       tools: [
         {
           type: "web_search_20260209",
@@ -86,6 +100,7 @@ export async function researchCategory(
       messages,
     });
 
+    usage = addUsage(usage, usageFrom(response));
     collectSources(response.content, sources, warnings, category.label);
     textParts.push(
       ...response.content.flatMap((block) => (block.type === "text" ? [block.text] : [])),
@@ -116,7 +131,11 @@ export async function researchCategory(
   const notes = textParts.join("\n\n").trim();
   if (!notes) warnings.push(`Research for "${category.label}" produced no findings.`);
 
-  return { category: categoryId, notes, sources: [...sources.values()], warnings };
+  // Printed as each category finishes — categories run concurrently, so these
+  // interleave, but each line is a real, complete number rather than a guess.
+  console.log(`[research] ${category.label}: ${formatUsageLine(usage, RESEARCH_MODEL)}`);
+
+  return { category: categoryId, notes, sources: [...sources.values()], warnings, usage };
 }
 
 function buildPrompt(category: CategoryDefinition, window: ResearchWindow): string {

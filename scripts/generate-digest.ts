@@ -11,13 +11,17 @@
 import "./loadEnvLocal";
 import { generateDigest } from "../src/server/service/DigestService";
 import { FileDigestRepository } from "../src/server/repository/FileDigestRepository";
+import { formatUsageLine, formatUsd } from "../src/server/service/UsageTracking";
+import { RESEARCH_MODEL, SYNTHESIS_MODEL } from "../src/server/service/AnthropicClient";
 
 async function main() {
   const trigger = process.argv.includes("--manual") ? "manual" : "scheduled";
   const repository = new FileDigestRepository(process.env.DIGEST_DATA_DIR?.trim() || "./data");
 
   console.log(`Starting a ${trigger} digest run…`);
-  const { digest, run } = await generateDigest(repository, { trigger });
+  // Per-category and per-synthesis-call lines stream from inside the pipeline
+  // as each call completes; this is the final summary once it's all done.
+  const { digest, run, usage } = await generateDigest(repository, { trigger });
 
   console.log(`\nPublished the edition of ${digest.date}:`);
   console.log(`  ${digest.entries.length} entries from ${digest.meta.sourcesConsulted} publishers`);
@@ -29,6 +33,11 @@ async function main() {
   for (const warning of run.warnings) {
     console.warn(`  warning: ${warning}`);
   }
+
+  console.log(`\nUsage:`);
+  console.log(`  research   ${formatUsageLine(usage.research, RESEARCH_MODEL)}`);
+  console.log(`  synthesis  ${formatUsageLine(usage.synthesis, SYNTHESIS_MODEL)}`);
+  console.log(`  total (estimated): ${formatUsd(usage.estimatedCostUsd)} — check the Anthropic Console for the real figure`);
 }
 
 main().catch((error) => {
