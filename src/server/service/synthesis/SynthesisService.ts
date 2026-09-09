@@ -52,10 +52,7 @@ export async function synthesizeDigest(
     betas: [FALLBACK_BETA],
     fallbacks: "default",
     thinking: { type: "adaptive" },
-    // This is the actual prose a reader sees, so it stays at high effort even
-    // though research (mechanical search-and-extract) was turned down to
-    // medium — the model and the effort level are two different cost levers.
-    output_config: { effort: "high", format: zodOutputFormat(draftSchema) },
+    output_config: { effort: "medium", format: zodOutputFormat(draftSchema) },
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: buildPrompt(research, sources, window) }],
   });

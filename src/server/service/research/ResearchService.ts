@@ -82,7 +82,7 @@ export async function researchCategory(
       thinking: { type: "adaptive" },
       // Research is mostly tool-calling and extraction, not prose, so medium
       // effort finds much the same things as high for meaningfully less
-      // thinking-token spend. The actual writing (synthesis) stays high.
+      // thinking-token spend. Synthesis (the actual writing) matches it.
       output_config: { effort: "medium" },
       // The system prompt is identical on every turn of this loop, and across
       // every category — caching it means only the first call anywhere in the

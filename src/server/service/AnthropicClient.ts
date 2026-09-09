@@ -1,17 +1,22 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 /**
- * Research is mostly mechanical — search, extract, summarise into structured
- * notes — so it runs on Sonnet 5. Synthesis is the actual editorial writing a
- * reader sees, so it stays on Opus 5, which is the more expensive model.
- * Splitting the two is most of the cost difference between a run that costs a
- * few dollars and one that costs a few cents.
+ * The two knobs that decide what a run costs: which model runs each stage, and
+ * how hard it thinks (set alongside each call, in ResearchService.ts and
+ * SynthesisService.ts — search for `output_config`).
+ *
+ * Kept as two separate constants, even though they currently match, so either
+ * stage can be bumped independently later — e.g. moving synthesis back to a
+ * pricier model without touching research — without restructuring anything.
  */
 export const RESEARCH_MODEL = "claude-sonnet-5";
-export const SYNTHESIS_MODEL = "claude-opus-5";
+export const SYNTHESIS_MODEL = "claude-sonnet-5";
 
-/** How the two-model split is described wherever one string is expected (the stored edition, logs). */
-export const MODEL_DESCRIPTION = `${RESEARCH_MODEL} (research) + ${SYNTHESIS_MODEL} (writing)`;
+/** How the model choice is described wherever one string is expected (the stored edition, logs). */
+export const MODEL_DESCRIPTION =
+  RESEARCH_MODEL === SYNTHESIS_MODEL
+    ? RESEARCH_MODEL
+    : `${RESEARCH_MODEL} (research) + ${SYNTHESIS_MODEL} (writing)`;
 
 /**
  * Server-side refusal fallback: if a policy classifier declines a request, the
