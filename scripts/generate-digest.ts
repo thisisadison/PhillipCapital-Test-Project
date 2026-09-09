@@ -8,6 +8,7 @@
  *
  *   npx tsx scripts/generate-digest.ts [--manual]
  */
+import "./loadEnvLocal";
 import { generateDigest } from "../src/server/service/DigestService";
 import { FileDigestRepository } from "../src/server/repository/FileDigestRepository";
 
