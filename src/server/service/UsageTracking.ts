@@ -50,6 +50,7 @@ export function usageFrom(response: { usage: Anthropic.Beta.BetaUsage }): UsageT
 
 /** $ per million tokens. Cache multipliers are Anthropic's standard ~1.25x write / ~0.1x read. */
 const PRICING: Record<string, { input: number; output: number }> = {
+  "claude-haiku-4-5": { input: 1, output: 5 },
   "claude-sonnet-5": { input: 2, output: 10 },
   "claude-opus-5": { input: 5, output: 25 },
 };

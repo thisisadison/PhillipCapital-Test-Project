@@ -9,8 +9,8 @@ import Anthropic from "@anthropic-ai/sdk";
  * stage can be bumped independently later — e.g. moving synthesis back to a
  * pricier model without touching research — without restructuring anything.
  */
-export const RESEARCH_MODEL = "claude-sonnet-5";
-export const SYNTHESIS_MODEL = "claude-sonnet-5";
+export const RESEARCH_MODEL = "claude-haiku-4-5";
+export const SYNTHESIS_MODEL = "claude-haiku-4-5";
 
 /** How the model choice is described wherever one string is expected (the stored edition, logs). */
 export const MODEL_DESCRIPTION =
@@ -24,6 +24,18 @@ export const MODEL_DESCRIPTION =
  * the weekly run.
  */
 export const FALLBACK_BETA = "server-side-fallback-2026-07-01";
+
+/**
+ * Haiku 4.5 predates several request-shape additions that the other models
+ * this pipeline has used all support: adaptive thinking, the `effort`
+ * parameter (which returns an error on Haiku 4.5 rather than being ignored),
+ * and the server-side refusal-fallback beta. Every call site checks this
+ * before adding any of the three, rather than hardcoding them and finding out
+ * from a 400 — which is exactly how the last two model swaps broke.
+ */
+export function supportsNewerRequestFeatures(model: string): boolean {
+  return model !== "claude-haiku-4-5";
+}
 
 let cached: Anthropic | undefined;
 

@@ -1,5 +1,5 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { FALLBACK_BETA, RESEARCH_MODEL } from "../AnthropicClient";
+import { FALLBACK_BETA, RESEARCH_MODEL, supportsNewerRequestFeatures } from "../AnthropicClient";
 import { addUsage, formatUsageLine, usageFrom, ZERO_USAGE, type UsageTotals } from "../UsageTracking";
 import { getCategory, type CategoryDefinition, type CategoryId } from "@/server/domain/category";
 import { ALLOWED_DOMAINS_BY_CATEGORY, MAX_ALLOWED_DOMAINS } from "./sourceCatalogue";
@@ -72,18 +72,27 @@ export async function researchCategory(
   const sources = new Map<string, RetrievedSource>();
   const textParts: string[] = [];
   let usage: UsageTotals = ZERO_USAGE;
+  const newerFeatures = supportsNewerRequestFeatures(RESEARCH_MODEL);
 
   for (let attempt = 0; attempt <= MAX_PAUSE_CONTINUATIONS; attempt += 1) {
     const response = await client.beta.messages.create({
       model: RESEARCH_MODEL,
       max_tokens: 16000,
-      betas: [FALLBACK_BETA],
-      fallbacks: "default",
-      thinking: { type: "adaptive" },
-      // Research is mostly tool-calling and extraction, not prose, so medium
-      // effort finds much the same things as high for meaningfully less
-      // thinking-token spend. Synthesis (the actual writing) matches it.
-      output_config: { effort: "medium" },
+      // Refusal fallback, adaptive thinking and `effort` are all absent on
+      // Haiku 4.5 — see `supportsNewerRequestFeatures`. Sending any of them
+      // there is a 400, not a no-op, so they're included as one group or not
+      // at all rather than guessed at individually.
+      ...(newerFeatures
+        ? {
+            betas: [FALLBACK_BETA],
+            fallbacks: "default" as const,
+            thinking: { type: "adaptive" as const },
+            // Research is mostly tool-calling and extraction, not prose, so
+            // medium effort finds much the same things as high for
+            // meaningfully less thinking-token spend.
+            output_config: { effort: "medium" as const },
+          }
+        : {}),
       // The system prompt is identical on every turn of this loop, and across
       // every category — caching it means only the first call anywhere in the
       // run pays full price; every later call, in this category or another,

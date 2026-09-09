@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { FALLBACK_BETA, SYNTHESIS_MODEL } from "../AnthropicClient";
+import { FALLBACK_BETA, SYNTHESIS_MODEL, supportsNewerRequestFeatures } from "../AnthropicClient";
 import { formatUsageLine, usageFrom, type UsageTotals } from "../UsageTracking";
 import { CATEGORIES } from "@/server/domain/category";
 import type { CategoryResearch, ResearchWindow } from "../research/ResearchService";
@@ -46,13 +46,21 @@ export async function synthesizeDigest(
   sources: SourceIndex,
   window: ResearchWindow,
 ): Promise<SynthesisResult> {
+  const newerFeatures = supportsNewerRequestFeatures(SYNTHESIS_MODEL);
+
   const response = await client.beta.messages.parse({
     model: SYNTHESIS_MODEL,
     max_tokens: 16000,
-    betas: [FALLBACK_BETA],
-    fallbacks: "default",
-    thinking: { type: "adaptive" },
-    output_config: { effort: "medium", format: zodOutputFormat(draftSchema) },
+    // See the matching comment in ResearchService.ts: Haiku 4.5 errors on
+    // refusal-fallback, adaptive thinking and `effort` alike, so all three are
+    // gated together rather than assumed present.
+    ...(newerFeatures
+      ? { betas: [FALLBACK_BETA], fallbacks: "default" as const, thinking: { type: "adaptive" as const } }
+      : {}),
+    output_config: {
+      ...(newerFeatures ? { effort: "medium" as const } : {}),
+      format: zodOutputFormat(draftSchema),
+    },
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: buildPrompt(research, sources, window) }],
   });

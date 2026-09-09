@@ -1,9 +1,13 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
 import { formatShortDate } from "@/shared/dates";
 import { SOURCE_TYPE_LABELS, type DigestEntry } from "@/server/domain/digest";
 import { getCategory } from "@/server/domain/category";
 import { seriesColor } from "@/ui/charts/palette";
 import { ImpactBadge } from "./ImpactBadge";
 import { PublisherMark } from "./PublisherMark";
+import { getServerReadSnapshot, isEntryRead, markEntryRead, subscribeToReadChanges } from "./readTracking";
 
 /**
  * One item.
@@ -12,13 +16,27 @@ import { PublisherMark } from "./PublisherMark";
  * how urgent it is, and which areas it lands on. The action line is the part a
  * reader can act on without opening the source, so it gets its own rule and
  * label rather than being buried in the prose.
+ *
+ * Client component because "already opened" is per-browser state — read from
+ * localStorage, never on the server. `useSyncExternalStore`'s server snapshot
+ * always says unread, so there's nothing to mismatch during hydration; a
+ * previously-read card just dims a moment after the page appears.
  */
 export function EntryCard({ entry, index }: { entry: DigestEntry; index: number }) {
   const category = getCategory(entry.category);
+  const read = useSyncExternalStore(
+    subscribeToReadChanges,
+    () => isEntryRead(entry.id),
+    getServerReadSnapshot,
+  );
 
   return (
     <li className="rise" style={{ animationDelay: `${Math.min(index, 6) * 45}ms` }}>
-      <article className="group relative overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-card)] transition-[border-color,transform] duration-200 hover:border-line-strong hover:-translate-y-px">
+      <article
+        className={`group relative overflow-hidden rounded-xl border border-line bg-surface shadow-[var(--shadow-card)] transition-[opacity,border-color,transform] duration-200 hover:border-line-strong hover:-translate-y-px ${
+          read ? "opacity-60 hover:opacity-100" : ""
+        }`}
+      >
         {/* A hairline in the category's own colour: the one place the section's
             identity appears on the card, without adding chrome. */}
         <span
@@ -34,6 +52,7 @@ export function EntryCard({ entry, index }: { entry: DigestEntry; index: number 
                 href={entry.sourceUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => markEntryRead(entry.id)}
                 className="after:absolute after:inset-0 after:content-[''] hover:underline hover:decoration-line-strong hover:underline-offset-4"
               >
                 {entry.headline}
@@ -75,6 +94,14 @@ export function EntryCard({ entry, index }: { entry: DigestEntry; index: number 
               <>
                 <Separator />
                 <time dateTime={entry.publishedAt}>{formatShortDate(entry.publishedAt)}</time>
+              </>
+            ) : null}
+            {/* Dimming the card is the sighted-glance cue; this is the same
+                fact stated in words, so it never depends on colour alone. */}
+            {read ? (
+              <>
+                <Separator />
+                <span>Opened</span>
               </>
             ) : null}
             <span
