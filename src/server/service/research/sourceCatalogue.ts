@@ -122,6 +122,19 @@ const FINANCIAL_CRIME_PROFESSION: DomainGroup = {
   domains: ["wolfsberg-principles.com", "acams.org"],
 };
 
+/**
+ * Singapore employment and manpower bodies.
+ *
+ * Only reached by the people/HR audit. Same caveat as PRESS above: if a
+ * research call starts failing with a 400 naming one of these, remove it — the
+ * search tool validates every allowed domain up front and rejects the whole
+ * request if one blocks its crawler.
+ */
+const SG_EMPLOYMENT_BODIES: DomainGroup = {
+  type: "regulator",
+  domains: ["mom.gov.sg", "cpf.gov.sg", "tafep.sg", "tal.sg"],
+};
+
 const RESILIENCE_BODIES: DomainGroup = {
   type: "regulator",
   domains: ["csa.gov.sg", "enisa.europa.eu", "ncsc.gov.uk", "cisa.gov"],
@@ -137,6 +150,7 @@ const ALL_GROUPS: DomainGroup[] = [
   AI_GOVERNANCE_BODIES,
   FINANCIAL_CRIME_BODIES,
   FINANCIAL_CRIME_PROFESSION,
+  SG_EMPLOYMENT_BODIES,
   RESILIENCE_BODIES,
 ];
 
@@ -222,6 +236,20 @@ export const MARKETS_CONDUCT_SOURCE_DOMAINS: string[] = domainsOf(
   REGULATORS_APAC,
   REGULATORS_GLOBAL,
   STANDARD_SETTERS,
+);
+
+/**
+ * A people audit at a licensed firm straddles two regimes: MAS sets fit and
+ * proper, licensing and accountability expectations, while MOM, CPF and TAFEP
+ * set the employment ones. Both are in scope, and telling them apart is part of
+ * the job — a MOM requirement is not a MAS one and the consequences differ.
+ */
+export const PEOPLE_SOURCE_DOMAINS: string[] = domainsOf(
+  REGULATORS_APAC,
+  SG_EMPLOYMENT_BODIES,
+  AI_GOVERNANCE_BODIES,
+  STANDARD_SETTERS,
+  REGULATORS_GLOBAL,
 );
 
 export const TECHNOLOGY_SOURCE_DOMAINS: string[] = domainsOf(

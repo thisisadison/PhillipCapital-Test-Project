@@ -113,9 +113,9 @@ export default function MethodPage() {
           </p>
           <p>
             The first question is what you are auditing. Internal Audit covers the whole firm, so
-            the tool carries four audit types — AML and financial crime, compliance and conduct,
-            client assets and money, and technology — and everything after that question comes from
-            the type you pick.
+            the tool carries five audit types — AML and financial crime, compliance and conduct,
+            client assets and money, technology, and people — and everything after that question
+            comes from the type you pick.
           </p>
           <p>
             The intake is not a questionnaire of our own devising. Each audit type takes its risk
@@ -134,7 +134,9 @@ export default function MethodPage() {
             Adding an audit type is a configuration file: its dimensions, its obligation themes, the
             sources it may cite and the four agent briefs. The pipeline, the approval gate and the
             traceability constraints are shared and unchanged. Operations and settlement, finance and
-            regulatory reporting, and credit and margin risk are the obvious next ones.
+            regulatory reporting, and credit and margin risk are the obvious next ones. Marketing is
+            deliberately not one: the regulated part of it is an advertising and unsolicited-contact
+            obligation, and it is tested inside the conduct audit where it belongs.
           </p>
           <p>
             Four agents run, with a human decision in the middle. A <strong>Risk Agent</strong> reads

@@ -46,9 +46,11 @@ programme that will be retyped badly.
 ## What not to put in
 
 The skill works from the firm's **risk profile** — business lines, client
-types, channels, jurisdictions, known weaknesses. It never needs customer
-names, account numbers, transaction data, CDD files or STR content, and it
-is written to refuse them.
+types, channels, jurisdictions, systems, workforce composition, known
+weaknesses. It never needs customer names, account numbers, transaction
+data, CDD files or STR content, and on a people audit it never needs staff
+names, personnel files, payroll figures or screening reports. It is written
+to refuse all of it.
 
 ## Re-running it
 
@@ -64,13 +66,20 @@ papers stay as a record of what changed.
 | Compliance & Conduct | SFA and FAA conduct obligations, Fair Dealing and Individual Accountability guidelines |
 | Client Assets & Money | The customer money and assets provisions of the SFA and its conduct-of-business regulations |
 | Technology / IT | MAS Technology Risk Management Guidelines, the Cyber Hygiene Notice, and the ITGC pillars |
+| People & HR | MAS fit and proper, notification and accountability expectations, plus MOM, CPF and fair employment obligations |
 
 The questions, the obligations and the sources all change with the type, so
 pick the one that matches the audit rather than the nearest fit.
 
 For an audit type it does not cover — operations and settlement, finance and
-regulatory reporting, credit and margin risk, HR, governance — it will still
-help, but it says so rather than implying the same framework grounding.
+regulatory reporting, credit and margin risk, governance — it will still help,
+but it says so rather than implying the same framework grounding.
+
+Marketing is deliberately not a separate type. The regulated part of it —
+advertising standards, balanced risk disclosure, approval before use,
+unsolicited contact — is a conduct obligation and lives in that audit. The
+rest is ordinary procurement and campaign management, which is not where a
+licensed firm's marketing risk actually sits.
 
 ## Keeping the references current
 

@@ -13,7 +13,8 @@ searches on the ones the firm's profile actually implicates.
 - **Product due diligence and approval** — Assessing a product before it is offered, and identifying the customers it is appropriate for.
 - **Customer classification** — Determining and evidencing customer status, including opt-in and opt-out where offered.
 - **Disclosure and documentation** — What must be disclosed before and at the point of sale, and the records that evidence it.
-- **Advertising and marketing** — Standards for promotional material, including balance, prominence of risk and approval before use.
+- **Advertising and marketing** — Standards for promotional material, including balance, prominence of risk, substantiation of claims, and approval before use.
+- **Unsolicited contact and marketing data** — Do Not Call obligations, consent for marketing messages, and the use of customer data to target them.
 - **Best execution and order handling** — Executing customer orders on the best available terms, order priority, and allocation.
 - **Market abuse and surveillance** — Insider dealing, market manipulation, and the monitoring expected of an intermediary.
 - **Conflicts of interest** — Identifying, mitigating and disclosing conflicts, including personal account dealing and research independence.

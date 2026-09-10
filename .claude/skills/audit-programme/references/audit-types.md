@@ -48,3 +48,12 @@ The dimensions follow the MAS Technology Risk Management Guidelines and the MAS 
 
 Read `technology/risk-dimensions.md`, `technology/obligation-themes.md` and
 `technology/source-policy.md` before starting.
+
+## People & HR
+
+Fit and proper, hiring, licensing, reward and exit — the processes behind everyone the firm lets act for it.
+
+The dimensions span both regimes that govern staff at a licensed firm: the MAS fit and proper criteria, representative notification and individual accountability expectations, and the employment obligations set by MOM, CPF and the fair employment guidelines.
+
+Read `people/risk-dimensions.md`, `people/obligation-themes.md` and
+`people/source-policy.md` before starting.

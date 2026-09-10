@@ -35,6 +35,14 @@ export const EXAMPLE_PROFILES: Record<AuditDomainId, Record<string, string[]>> =
     disclosure: ["statements", "consent-to-use", "overseas-consent"],
     controls: ["rec-backlog", "system-change"],
   },
+  people: {
+    workforce: ["appointed-reps", "remisiers", "senior-managers", "work-pass-holders"],
+    hiring: ["fit-and-proper", "reference-checks", "agency-hiring"],
+    licensing: ["notification", "cpd", "manual-tracking"],
+    reward: ["commission", "balanced-scorecard", "sales-targets"],
+    exit: ["dismissals", "access-revocation", "references-given"],
+    controls: ["register-mismatch", "access-lag"],
+  },
   technology: {
     environment: ["core-trading", "customer-apps", "cloud", "vendor-systems"],
     criticality: ["business-critical", "financial-transactions", "customer-data"],

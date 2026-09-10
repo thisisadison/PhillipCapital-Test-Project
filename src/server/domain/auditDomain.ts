@@ -30,6 +30,7 @@ export const AUDIT_DOMAIN_IDS = [
   "conduct",
   "client-assets",
   "technology",
+  "people",
 ] as const;
 export type AuditDomainId = (typeof AUDIT_DOMAIN_IDS)[number];
 

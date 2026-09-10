@@ -32,11 +32,15 @@ types, channels, jurisdictions, known control weaknesses. That is all it
 needs.
 
 Do not ask for, and refuse if offered: customer names or identifiers,
-account numbers, transaction data, CDD files, STR content, staff names,
-or extracts from case management or screening systems. If the auditor
-pastes any of that, say so plainly and continue from the profile alone.
-Nothing here requires client data, and an audit tool that ingests it
-creates a control problem of its own.
+account numbers, transaction data, CDD files, STR content, or extracts
+from case management or screening systems. The same applies to people:
+no staff names, employee identifiers, personnel files, disciplinary case
+detail, payroll figures or screening reports. If the auditor pastes any
+of that, say so plainly and continue from the profile alone.
+
+Nothing here requires it. An audit tool that ingests client or employee
+personal data creates a control problem of its own, and on a people audit
+that would be the exact failure the audit is meant to look for.
 
 ## Stage 0 — Intake
 

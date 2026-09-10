@@ -51,6 +51,9 @@ How it reaches the customer. Determines whether suitability obligations apply, a
 - Face-to-face through representatives
 - Third-party distributors
 - Marketing and promotional campaigns
+- Digital marketing and social media — *Disclaimers rarely survive a short format*
+- Affiliate, referral or influencer promotion — *The firm remains responsible for it*
+- Outbound calling or unsolicited contact — *Do Not Call obligations*
 - Cross-border solicitation
 
 ## Market-facing activity

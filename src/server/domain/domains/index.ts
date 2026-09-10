@@ -10,8 +10,10 @@ import "./aml";
 import "./conduct";
 import "./clientAssets";
 import "./technology";
+import "./people";
 
 export { AML_DOMAIN } from "./aml";
 export { CONDUCT_DOMAIN } from "./conduct";
 export { CLIENT_ASSETS_DOMAIN } from "./clientAssets";
 export { TECHNOLOGY_DOMAIN } from "./technology";
+export { PEOPLE_DOMAIN } from "./people";
