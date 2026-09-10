@@ -3,6 +3,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 const LINKS = [
   { href: "/", label: "This week" },
+  { href: "/programme", label: "Programme" },
   { href: "/archive", label: "Archive" },
   { href: "/method", label: "Method" },
 ];

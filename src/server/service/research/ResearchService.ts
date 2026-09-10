@@ -34,7 +34,23 @@ export interface ResearchWindow {
  * three turns rather than five caps the worst case at 3/5 of what it was.
  */
 const MAX_PAUSE_CONTINUATIONS = 2;
-const MAX_SEARCHES_PER_CATEGORY = 8;
+
+/**
+ * Searches are billed at roughly a cent each, but the real cost is that the
+ * retrieved page content bills as input tokens on the turn it arrives *and on
+ * every later turn of the same conversation*. Three focused searches per
+ * category is the setting that matters most for spend — raise it only if
+ * findings are visibly thin.
+ */
+const MAX_SEARCHES_PER_CATEGORY = numberFromEnv("DIGEST_MAX_SEARCHES_PER_CATEGORY", 3);
+
+/** Research notes are prose summaries, not documents — this caps a runaway turn. */
+const RESEARCH_MAX_TOKENS = numberFromEnv("DIGEST_RESEARCH_MAX_TOKENS", 8000);
+
+function numberFromEnv(name: string, fallback: number): number {
+  const parsed = Number(process.env[name]?.trim());
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 const SYSTEM_PROMPT = [
   "You are a research analyst for the Internal Audit function of a financial services firm in Singapore.",
@@ -77,7 +93,7 @@ export async function researchCategory(
   for (let attempt = 0; attempt <= MAX_PAUSE_CONTINUATIONS; attempt += 1) {
     const response = await client.beta.messages.create({
       model: RESEARCH_MODEL,
-      max_tokens: 16000,
+      max_tokens: RESEARCH_MAX_TOKENS,
       // Refusal fallback, adaptive thinking and `effort` are all absent on
       // Haiku 4.5 — see `supportsNewerRequestFeatures`. Sending any of them
       // there is a 400, not a no-op, so they're included as one group or not
@@ -129,8 +145,9 @@ export async function researchCategory(
       break;
     }
 
-    // A paused turn is resumed by echoing the partial assistant turn back.
-    messages.push({ role: "assistant", content: response.content });
+    // A paused turn is resumed by echoing the partial assistant turn back, with
+    // a cache breakpoint on its tail — see `withCacheBreakpoint`.
+    messages.push({ role: "assistant", content: withCacheBreakpoint(response.content) });
 
     if (attempt === MAX_PAUSE_CONTINUATIONS) {
       warnings.push(`Research for "${category.label}" was still paused after ${attempt + 1} turns.`);
@@ -145,6 +162,35 @@ export async function researchCategory(
   console.log(`[research] ${category.label}: ${formatUsageLine(usage, RESEARCH_MODEL)}`);
 
   return { category: categoryId, notes, sources: [...sources.values()], warnings, usage };
+}
+
+/**
+ * Marks everything up to the end of this turn as cacheable.
+ *
+ * Retrieved search results bill as input tokens on the turn they arrive and on
+ * every later turn of the conversation, which with multiple continuations is
+ * the largest avoidable cost in the pipeline. A breakpoint here means each
+ * continuation reads the prior turns back at roughly a tenth of the price
+ * rather than paying full freight for them again.
+ *
+ * The casts are because response blocks and request blocks are separate types
+ * in the SDK: the request variants carry `cache_control`, the response
+ * variants do not, and this is the seam where one becomes the other.
+ */
+function withCacheBreakpoint(
+  content: Anthropic.Beta.BetaContentBlock[],
+): Anthropic.Beta.BetaContentBlockParam[] {
+  const blocks = [...content] as Anthropic.Beta.BetaContentBlockParam[];
+  const lastIndex = blocks.length - 1;
+  const last = blocks[lastIndex];
+
+  if (last) {
+    blocks[lastIndex] = {
+      ...last,
+      cache_control: { type: "ephemeral" },
+    } as Anthropic.Beta.BetaContentBlockParam;
+  }
+  return blocks;
 }
 
 function buildPrompt(category: CategoryDefinition, window: ResearchWindow): string {

@@ -188,3 +188,17 @@ export function isPrimarySource(url: string): boolean {
   const type = classifySource(url);
   return type === "regulator" || type === "profession";
 }
+
+/**
+ * Sources an AML audit programme may cite.
+ *
+ * Narrower than any digest category: a programme states obligations an auditor
+ * will test against, so it draws only on the bodies that actually set them —
+ * no trade press, no vendor commentary.
+ */
+export const AML_PROGRAMME_DOMAINS: string[] = domainsOf(
+  FINANCIAL_CRIME_BODIES,
+  FINANCIAL_CRIME_PROFESSION,
+  REGULATORS_APAC,
+  STANDARD_SETTERS,
+);

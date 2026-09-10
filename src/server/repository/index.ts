@@ -16,3 +16,18 @@ export function getDigestRepository(): DigestRepository {
   }
   return cached;
 }
+
+import { FileProgrammeRepository } from "./FileProgrammeRepository";
+import type { ProgrammeRepository } from "./ProgrammeRepository";
+
+export type { ProgrammeRepository } from "./ProgrammeRepository";
+export { FileProgrammeRepository } from "./FileProgrammeRepository";
+
+let cachedProgrammes: ProgrammeRepository | undefined;
+
+export function getProgrammeRepository(): ProgrammeRepository {
+  if (!cachedProgrammes) {
+    cachedProgrammes = new FileProgrammeRepository(process.env.DIGEST_DATA_DIR?.trim() || "./data");
+  }
+  return cachedProgrammes;
+}
