@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "digest:generate": "tsx scripts/generate-digest.ts"
+    "digest:generate": "tsx scripts/generate-digest.ts",
+    "skill:refs": "tsx scripts/generateSkillReferences.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
