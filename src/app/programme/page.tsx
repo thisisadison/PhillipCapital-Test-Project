@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/ui/components/SiteHeader";
 import { ProgrammeForm } from "@/ui/components/ProgrammeForm";
+import { PipelineOverview } from "@/ui/components/PipelineOverview";
 import { allAuditDomains } from "@/server/domain/auditDomain";
 import { EXAMPLE_PROFILES } from "@/server/domain/exampleProfiles";
 import "@/server/domain/domains";
@@ -26,20 +27,20 @@ export default async function ProgrammeIndexPage() {
           Audit Programme
         </h1>
         <p className="mt-5 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          Pick what you are auditing and answer its risk dimensions. Those dimensions are lifted
-          from the framework that governs each area — MAS&apos;s four ML/TF dimensions for financial
-          crime, the Technology Risk Management Guidelines and the ITGC pillars for technology — so
-          answering them is the risk assessment, not a questionnaire we invented.
-        </p>
-        <p className="mt-3 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          Four agents run, with your approval in the middle. Two go first and in parallel — one
-          assessing what this profile exposes the firm to, one reading the applicable MAS and FATF
-          requirements. A third merges them into a proposed scope. You approve it, and only then is
-          the detailed testing drafted, and only for what you kept. Every stage shows what it
-          produced, what it cost, and what it dropped.
+          Pick what you are auditing, then answer its risk dimensions. Those questions come from the
+          framework that governs the area — so answering them is the risk assessment itself, not a
+          questionnaire we invented.
         </p>
 
         <div className="mt-8">
+          <PipelineOverview />
+        </div>
+
+        <p className="meta mt-3 leading-relaxed text-ink-faint">
+          Every stage records what it produced, what it cost, and what it dropped.
+        </p>
+
+        <div className="mt-10">
           <ProgrammeForm domains={allAuditDomains()} examples={EXAMPLE_PROFILES} />
         </div>
 

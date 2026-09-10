@@ -1,4 +1,5 @@
 import { type AgentRun } from "@/server/domain/programme";
+import { PIPELINE_STAGES } from "@/server/domain/pipeline";
 import { formatUsd } from "@/server/service/UsageTracking";
 
 /**
@@ -14,17 +15,6 @@ import { formatUsd } from "@/server/service/UsageTracking";
  * checkpoint reads as a stage in a process rather than an error.
  */
 
-const AGENTS: { id: AgentRun["agent"]; name: string; job: string }[] = [
-  { id: "risk", name: "Risk Agent", job: "Assesses what this firm is exposed to" },
-  {
-    id: "obligations",
-    name: "Obligations Agent",
-    job: "Reads the requirements that apply, with sources",
-  },
-  { id: "scope", name: "Scope Agent", job: "Merges risk and obligations into a proposed scope" },
-  { id: "evidence", name: "Evidence Agent", job: "Writes testing steps for approved areas only" },
-];
-
 export function AgentTimeline({ runs, awaitingApproval }: { runs: AgentRun[]; awaitingApproval: boolean }) {
   const byAgent = new Map(runs.map((run) => [run.agent, run]));
   const total = runs.reduce((sum, run) => sum + run.costUsd, 0);
@@ -37,14 +27,15 @@ export function AgentTimeline({ runs, awaitingApproval }: { runs: AgentRun[]; aw
       </div>
 
       <ol className="mt-4">
-        {AGENTS.map((agent, index) => {
+        {PIPELINE_STAGES.map((agent, index) => {
           const run = byAgent.get(agent.id);
-          const parallel = agent.id === "obligations";
 
           return (
             <li
               key={agent.id}
-              className={`relative border-line pl-7 ${index === AGENTS.length - 1 ? "" : "border-l pb-5"}`}
+              className={`relative border-line pl-7 ${
+                index === PIPELINE_STAGES.length - 1 ? "" : "border-l pb-5"
+              }`}
             >
               {/* The rail marker: filled for a stage that ran, hollow for one
                   that has not. Shape, not colour, carries the distinction. */}
@@ -59,12 +50,12 @@ export function AgentTimeline({ runs, awaitingApproval }: { runs: AgentRun[]; aw
                 <h3 className={`text-[0.9375rem] font-semibold ${run ? "text-ink" : "text-ink-faint"}`}>
                   {agent.name}
                 </h3>
-                {parallel ? (
+                {agent.parallel ? (
                   <span className="meta text-ink-faint">in parallel with the Risk Agent</span>
                 ) : null}
               </div>
 
-              <p className="meta mt-0.5 text-ink-faint">{agent.job}</p>
+              <p className="meta mt-0.5 text-ink-faint">{agent.objective}</p>
 
               {run ? (
                 <>
@@ -93,7 +84,7 @@ export function AgentTimeline({ runs, awaitingApproval }: { runs: AgentRun[]; aw
                 </>
               ) : (
                 <p className="mt-1.5 text-[0.9375rem] leading-[1.6] text-ink-faint">
-                  {agent.id === "evidence" && awaitingApproval
+                  {agent.afterApproval && awaitingApproval
                     ? "Waiting on your approval of the scope below. Nothing is drafted until then."
                     : "Has not run."}
                 </p>
