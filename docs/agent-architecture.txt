@@ -1,0 +1,161 @@
+               +--------------------------------------------+
+               |  AUDIT TYPE                                |
+               +--------------------------------------------+
+               |                                            |
+               |  AML  /  Conduct  /  Client Assets  /      |
+               |  Technology  /  People                     |
+               +--------------------------------------------+
+                                      |
+                                      v
+               +--------------------------------------------+
+               |  RISK INTAKE                               |
+               +--------------------------------------------+
+               |                                            |
+               |  Fixed checkbox options, taken from the    |
+               |  framework that governs that audit.        |
+               |  Answering them IS the risk assessment.    |
+               +--------------------------------------------+
+                                      |
+                   +------------------+--------------------+
+                   v                                       v
+   +------------------------------+        +------------------------------+
+   |  1. RISK AGENT               |        |  2. OBLIGATIONS AGENT        |
+   +------------------------------+        +------------------------------+
+   |                              |        |                              |
+   |  NO TOOLS.                   |        |  WEB SEARCH - the only       |
+   |  Judgement about the firm in |        |  agent with network access.  |
+   |  front of it, not research.  |        |                              |
+   |                              |        |  Cites a catalogue handle,   |
+   |  Cheapest agent, so it runs  |        |  so a fake URL cannot be     |
+   |  alongside the expensive one.|        |  expressed at all.           |
+   +------------------------------+        +------------------------------+
+                   |                                       |
+                   | risk factors                          | obligations
+                   | tagged by dimension,                  | each with a source URL
+                   | traced to your answers                | and a coverage theme
+                   |                                       |
+                   +------------------+--------------------+
+                                      v
+               +--------------------------------------------+
+               |  3. SCOPE AGENT                            |
+               +--------------------------------------------+
+               |                                            |
+               |  Merges both into proposed control areas.  |
+               |                                            |
+               |  An area that cannot cite BOTH a risk      |
+               |  factor AND an obligation is dropped.      |
+               +--------------------------------------------+
+                                      |
+                                      v
+           ######################################################
+           #                                                    #
+           #  >>>  YOU APPROVE THE SCOPE  <<<                   #
+           #                                                    #
+           #  Keep or drop each proposed area.                  #
+           #  Nothing further is drafted until you decide.      #
+           ######################################################
+                                      |
+                                      v
+               +--------------------------------------------+
+               |  4. EVIDENCE AGENT                         |
+               +--------------------------------------------+
+               |                                            |
+               |  Writes testing steps for APPROVED areas   |
+               |  only. Untick half the scope, pay half.    |
+               |                                            |
+               |  A step with no named evidence is dropped. |
+               +--------------------------------------------+
+                                      |
+                                      v
+               +--------------------------------------------+
+               |  AUDIT PROGRAMME                           |
+               +--------------------------------------------+
+               |                                            |
+               |  Every stage persisted: what it produced,  |
+               |  what it cost, what it dropped.            |
+               +--------------------------------------------+
+
+
+===============================================================================
+COMPACT — for a narrow slide or a one-column layout
+===============================================================================
+
+    AUDIT TYPE
+    AML / Conduct / Client Assets / Technology / People
+         |
+         v
+    RISK INTAKE
+    Fixed options from that audit's own framework
+         |
+         +----------------------------+
+         |                            |
+         v                            v
+    1. RISK AGENT              2. OBLIGATIONS AGENT
+    no tools                   web search only
+    what the firm is           what it must comply
+    exposed to                 with, each cited
+         |                            |
+         +----------------------------+
+                      |
+                      v
+              3. SCOPE AGENT
+              merges both into proposed control areas
+                      |
+                      v
+        ##############################
+        #  YOU APPROVE THE SCOPE     #
+        #  keep or drop each area    #
+        ##############################
+                      |
+                      v
+              4. EVIDENCE AGENT
+              testing steps, approved areas only
+                      |
+                      v
+              AUDIT PROGRAMME
+
+
+===============================================================================
+FOR AN AI DIAGRAM GENERATOR — paste this instead of the ASCII
+===============================================================================
+
+Draw a top-to-bottom flowchart of a multi-agent audit system, 8 nodes:
+
+1. "Audit Type" (rounded rectangle, grey)
+   -> 2. "Risk Intake" (rounded rectangle, grey)
+   -> splits into two parallel boxes side by side:
+        3. "1. Risk Agent - no tools, assesses exposure" (blue)
+        4. "2. Obligations Agent - web search, finds requirements" (orange)
+   -> both merge into 5. "3. Scope Agent - proposes control areas" (green)
+   -> 6. "YOU APPROVE THE SCOPE - human decision" (highlighted, gold, thick border)
+   -> 7. "4. Evidence Agent - writes testing steps for approved areas" (purple)
+   -> 8. "Audit Programme" (rounded rectangle, grey)
+
+Emphasise node 6: it is the only human step and the point of the design.
+Label the two arrows leaving the parallel pair "risk factors" and "obligations".
+
+
+===============================================================================
+MERMAID — renders directly in Notion, GitHub, Obsidian, many slide tools
+===============================================================================
+
+flowchart TD
+    A[Audit Type<br/>AML · Conduct · Client Assets · Technology · People]
+    B[Risk Intake<br/>fixed options from that audit's framework]
+    R[1 · Risk Agent<br/>no tools<br/>what the firm is exposed to]
+    O[2 · Obligations Agent<br/>web search only<br/>what it must comply with]
+    S[3 · Scope Agent<br/>merges both into proposed control areas]
+    G{{YOU APPROVE THE SCOPE<br/>keep or drop each area}}
+    E[4 · Evidence Agent<br/>testing steps, approved areas only]
+    P[Audit Programme<br/>every stage persisted with cost and rejections]
+
+    A --> B
+    B --> R
+    B --> O
+    R -- risk factors --> S
+    O -- obligations --> S
+    S --> G
+    G -- approved areas only --> E
+    E --> P
+
+    style G fill:#eda100,stroke:#333,stroke-width:3px,color:#000
