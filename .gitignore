@@ -9,10 +9,12 @@ next-env.d.ts
 .env.local
 .env*.local
 
-# Generated digests are runtime data, not source. Keep the directory,
-# ignore its contents (see data/digests/.gitkeep).
+# Generated digests and programmes are runtime data, not source. Keep the
+# directories, ignore their contents (see the .gitkeep in each).
 /data/digests/*
 !/data/digests/.gitkeep
+/data/programmes/*
+!/data/programmes/.gitkeep
 
 .DS_Store
 *.log

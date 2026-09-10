@@ -1,66 +1,125 @@
 import { z } from "zod";
+import { riskIntakeSchema } from "./riskIntake";
 
 /**
- * An internal audit programme: the actual steps an auditor works through.
+ * An audit programme, as a staged document rather than a single generated blob.
  *
- * Deliberately a different shape from a digest entry. A digest tells you what
- * changed; a programme tells you what to go and test, and what to ask for as
- * evidence. The two share the grounding rule — every requirement cites a source
- * that was actually retrieved — and nothing else.
+ * The staging is the point. Each agent's output is persisted separately and
+ * shown to the auditor — the risk factors, the obligations found, the proposed
+ * scope — so the process between "here is my firm" and "here is the programme"
+ * is inspectable and can be corrected. A programme that arrives complete in one
+ * step is indistinguishable from a chat reply; one that arrives in reviewable
+ * stages is a tool.
  */
 
 export const RISK_RATINGS = ["high", "medium", "low"] as const;
 export type RiskRating = (typeof RISK_RATINGS)[number];
 
 export const RISK_LABELS: Record<RiskRating, string> = {
-  high: "High risk",
-  medium: "Medium risk",
-  low: "Low risk",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
 };
+
+export const RISK_ORDER: Record<RiskRating, number> = { high: 0, medium: 1, low: 2 };
+
+/**
+ * Where a programme is in its lifecycle. `planned` is the state that makes the
+ * approval checkpoint real: the scope exists, the detailed steps do not, and
+ * nothing further happens until the auditor says so.
+ */
+export const PROGRAMME_STATUSES = ["planned", "complete"] as const;
+export type ProgrammeStatus = (typeof PROGRAMME_STATUSES)[number];
+
+/** Risk Agent output. Traced back to the intake selections that produced it. */
+export const riskFactorSchema = z.object({
+  id: z.string().min(1),
+  factor: z.string().min(1),
+  severity: z.enum(RISK_RATINGS),
+  /** Which intake answers drove this, in the auditor's own vocabulary. */
+  drivenBy: z.array(z.string().min(1)).max(6),
+  rationale: z.string().min(1),
+});
+
+export type RiskFactor = z.infer<typeof riskFactorSchema>;
+
+/** MAS Agent output. Every obligation carries the source it was read from. */
+export const obligationSchema = z.object({
+  id: z.string().min(1),
+  reference: z.string().min(1),
+  requirement: z.string().min(1),
+  sourceName: z.string().min(1),
+  sourceUrl: z.url(),
+});
+
+export type Obligation = z.infer<typeof obligationSchema>;
 
 export const auditStepSchema = z.object({
   id: z.string().min(1),
-  /** What the auditor actually does. Imperative: "Obtain…", "Reperform…". */
   procedure: z.string().min(1),
-  /** What the auditor should ask the business to produce. */
   evidenceRequired: z.string().min(1),
-  /** Population and sample guidance, when the step is a testing step. */
   sampling: z.string().optional(),
 });
 
 export type AuditStep = z.infer<typeof auditStepSchema>;
 
-export const programmeSectionSchema = z.object({
+/**
+ * Scope Agent output: a proposed control area, before any steps are written.
+ *
+ * This is what the auditor approves or drops. `approved` defaults to true so
+ * the checkpoint is a review rather than a data-entry task, but nothing is
+ * drafted for an area the auditor unticks.
+ */
+export const scopeAreaSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
-  /** Drives ordering and the amount of coverage the section gets. */
   riskRating: z.enum(RISK_RATINGS),
-  /** Why this area is in scope, tied back to the risk context supplied. */
+  /** Why this area is in scope for this firm, referencing the risk factors. */
   rationale: z.string().min(1),
-  /** The obligation being tested, e.g. "MAS Notice 626, para 6". */
-  requirementReference: z.string().min(1),
-  sourceName: z.string().min(1),
-  sourceUrl: z.url(),
-  steps: z.array(auditStepSchema).min(1),
+  /** Ids of the risk factors this area answers. */
+  addressesRiskFactors: z.array(z.string()).max(8),
+  /** Ids of the obligations tested here. */
+  testsObligations: z.array(z.string()).max(8),
+  approved: z.boolean(),
+  /** Populated by the Evidence Agent, and only for approved areas. */
+  steps: z.array(auditStepSchema).default([]),
 });
 
-export type ProgrammeSection = z.infer<typeof programmeSectionSchema>;
+export type ScopeArea = z.infer<typeof scopeAreaSchema>;
+
+/** One agent's execution, recorded so the pipeline can be read back afterwards. */
+export const agentRunSchema = z.object({
+  agent: z.enum(["risk", "mas", "scope", "evidence"]),
+  startedAt: z.iso.datetime({ offset: true }),
+  finishedAt: z.iso.datetime({ offset: true }),
+  model: z.string(),
+  /** What the agent produced, e.g. "6 risk factors". Shown in the timeline. */
+  produced: z.string(),
+  /** Estimated spend for this agent alone. */
+  costUsd: z.number().nonnegative(),
+  /** Anything dropped or degraded, surfaced rather than hidden. */
+  notes: z.array(z.string()).default([]),
+});
+
+export type AgentRun = z.infer<typeof agentRunSchema>;
 
 export const auditProgrammeSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
-  generatedAt: z.iso.datetime({ offset: true }),
-  /** The risk context the auditor supplied, kept verbatim for traceability. */
-  riskContext: z.string().min(1),
-  /** One paragraph naming what this programme covers and what it deliberately does not. */
+  status: z.enum(PROGRAMME_STATUSES),
+  createdAt: z.iso.datetime({ offset: true }),
+  /** Set when the Evidence Agent has run. */
+  completedAt: z.iso.datetime({ offset: true }).optional(),
+
+  intake: riskIntakeSchema,
   scopeSummary: z.string().min(1),
-  sections: z.array(programmeSectionSchema),
-  meta: z.object({
-    model: z.string(),
-    sourcesConsulted: z.number().int().nonnegative(),
-    /** Sections dropped in normalisation — an ungrounded citation, or no steps. */
-    sectionsRejected: z.number().int().nonnegative(),
-  }),
+
+  riskFactors: z.array(riskFactorSchema),
+  obligations: z.array(obligationSchema),
+  scopeAreas: z.array(scopeAreaSchema),
+
+  /** The visible pipeline: one entry per agent that ran, in order. */
+  runs: z.array(agentRunSchema),
 });
 
 export type AuditProgramme = z.infer<typeof auditProgrammeSchema>;
@@ -68,10 +127,16 @@ export type AuditProgramme = z.infer<typeof auditProgrammeSchema>;
 export interface ProgrammeSummary {
   id: string;
   title: string;
-  generatedAt: string;
-  sectionCount: number;
+  status: ProgrammeStatus;
+  createdAt: string;
+  areaCount: number;
   stepCount: number;
 }
 
-/** Ordering for display: the riskiest areas lead the programme. */
-export const RISK_ORDER: Record<RiskRating, number> = { high: 0, medium: 1, low: 2 };
+export function totalSteps(programme: AuditProgramme): number {
+  return programme.scopeAreas.reduce((total, area) => total + area.steps.length, 0);
+}
+
+export function totalCostUsd(programme: AuditProgramme): number {
+  return programme.runs.reduce((total, run) => total + run.costUsd, 0);
+}

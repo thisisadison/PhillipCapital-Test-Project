@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import {
   auditProgrammeSchema,
+  totalSteps,
   type AuditProgramme,
   type ProgrammeSummary,
 } from "@/server/domain/programme";
@@ -61,9 +62,10 @@ export class FileProgrammeRepository implements ProgrammeRepository {
       .map((programme) => ({
         id: programme.id,
         title: programme.title,
-        generatedAt: programme.generatedAt,
-        sectionCount: programme.sections.length,
-        stepCount: programme.sections.reduce((total, section) => total + section.steps.length, 0),
+        status: programme.status,
+        createdAt: programme.createdAt,
+        areaCount: programme.scopeAreas.length,
+        stepCount: totalSteps(programme),
       }));
   }
 

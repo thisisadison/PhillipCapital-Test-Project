@@ -1,60 +1,65 @@
 import { NextResponse } from "next/server";
-import { MissingApiKeyError } from "@/server/service/AnthropicClient";
-import { generateProgramme } from "@/server/service/programme/ProgrammeService";
+import { planProgramme } from "@/server/service/programme/ProgrammePipeline";
 import { runExclusive } from "@/server/service/runGuard";
 import { getProgrammeRepository } from "@/server/repository";
+import { riskIntakeSchema } from "@/server/domain/riskIntake";
+import { programmeErrorResponse } from "./errors";
 
+/**
+ * Stage one: plan. Runs the Risk, MAS and Scope agents and stops.
+ *
+ * It deliberately does not produce a finished programme. The response is a
+ * proposed scope for the auditor to approve, and drafting the steps is a
+ * separate call to `/api/programme/[id]/approve`.
+ */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 800;
 
-const MIN_CONTEXT_CHARS = 40;
-const MAX_CONTEXT_CHARS = 4000;
-/** Generating a programme costs real API spend; this is the anti-spam floor. */
-const COOLDOWN_MINUTES = 5;
+/** Planning costs real API spend; this is the anti-spam floor. */
+const COOLDOWN_MINUTES = 3;
 
 export async function POST(request: Request) {
   const repository = getProgrammeRepository();
 
-  let riskContext: unknown;
+  let body: unknown;
   try {
-    ({ riskContext } = await request.json());
+    body = await request.json();
   } catch {
     return NextResponse.json({ error: "Expected a JSON body." }, { status: 400 });
   }
 
-  if (typeof riskContext !== "string" || riskContext.trim().length < MIN_CONTEXT_CHARS) {
+  const parsed = riskIntakeSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
-      {
-        error:
-          `Describe the firm's risk context in at least ${MIN_CONTEXT_CHARS} characters — the ` +
-          `programme is only risk-based if it has a risk assessment to work from.`,
-      },
+      { error: parsed.error.issues[0]?.message ?? "That intake is incomplete." },
       { status: 400 },
     );
-  }
-  if (riskContext.length > MAX_CONTEXT_CHARS) {
-    return NextResponse.json({ error: "That risk context is too long." }, { status: 400 });
   }
 
   const [latest] = await repository.listSummaries(1);
   if (latest) {
-    const elapsedMs = Date.now() - new Date(latest.generatedAt).getTime();
+    const elapsedMs = Date.now() - new Date(latest.createdAt).getTime();
     const cooldownMs = COOLDOWN_MINUTES * 60_000;
     if (elapsedMs >= 0 && elapsedMs < cooldownMs) {
       return NextResponse.json(
         {
-          error: `A programme was generated ${Math.max(1, Math.round(elapsedMs / 60_000))} minute(s) ago. Wait a few minutes before generating another.`,
+          error: `A programme was planned ${Math.max(1, Math.round(elapsedMs / 60_000))} minute(s) ago. Wait a few minutes before planning another.`,
         },
-        { status: 429, headers: { "Retry-After": String(Math.ceil((cooldownMs - elapsedMs) / 1000)) } },
+        {
+          status: 429,
+          headers: { "Retry-After": String(Math.ceil((cooldownMs - elapsedMs) / 1000)) },
+        },
       );
     }
   }
 
   try {
-    const outcome = await runExclusive(() =>
-      generateProgramme(repository, { riskContext: riskContext as string }),
-    );
+    const outcome = await runExclusive(async () => {
+      const result = await planProgramme(parsed.data);
+      await repository.save(result.programme);
+      return result;
+    });
 
     if (outcome.status === "busy") {
       return NextResponse.json(
@@ -67,21 +72,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       id: programme.id,
-      sections: programme.sections.length,
+      areas: programme.scopeAreas.length,
       warnings,
     });
   } catch (error) {
-    console.error("[programme] Generation failed.", error);
-
-    if (error instanceof MissingApiKeyError) {
-      return NextResponse.json(
-        { error: "ANTHROPIC_API_KEY is not set, so nothing can be generated." },
-        { status: 503 },
-      );
-    }
-    return NextResponse.json(
-      { error: "The programme could not be generated. Nothing was saved." },
-      { status: 500 },
-    );
+    return programmeErrorResponse(error, "planned");
   }
 }

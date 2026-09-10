@@ -23,9 +23,14 @@ export default async function ProgrammeIndexPage() {
           Audit Programme
         </h1>
         <p className="mt-5 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          Describe the firm&apos;s risk context and this researches the applicable MAS and FATF
-          obligations, then drafts a risk-based programme of audit steps against them — each one
-          citing the requirement it tests and naming the evidence to collect.
+          Four agents, with your approval in the middle. Two run first and in parallel — one
+          assessing what this firm is exposed to, one reading the applicable MAS and FATF
+          requirements. A third merges them into a proposed scope. You approve it, and only then is
+          the detailed testing drafted, and only for what you kept.
+        </p>
+        <p className="mt-3 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
+          Every stage is shown with what it produced and what it cost, so the reasoning between your
+          answers and the programme is something you can read and correct.
         </p>
 
         <div className="mt-8">
@@ -33,11 +38,11 @@ export default async function ProgrammeIndexPage() {
         </div>
 
         <section className="mt-14">
-          <h2 className="meta uppercase tracking-[0.14em] text-ink">Generated programmes</h2>
+          <h2 className="meta uppercase tracking-[0.14em] text-ink">Programmes</h2>
 
           {programmes.length === 0 ? (
             <p className="mt-4 rounded-xl border border-dashed border-line px-5 py-8 text-sm text-ink-faint">
-              None yet. Generate one above and it will be kept here.
+              None yet. Plan one above and it will be kept here.
             </p>
           ) : (
             <ol className="mt-4 divide-y divide-line border-t border-line-strong">
@@ -48,13 +53,24 @@ export default async function ProgrammeIndexPage() {
                       {programme.title}
                     </p>
                     <p className="meta mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <time dateTime={programme.generatedAt}>
-                        {formatTimestamp(programme.generatedAt, TIMEZONE)}
+                      <time dateTime={programme.createdAt}>
+                        {formatTimestamp(programme.createdAt, TIMEZONE)}
                       </time>
                       <span aria-hidden="true" className="text-line-strong">·</span>
-                      <span>{programme.sectionCount} areas</span>
-                      <span aria-hidden="true" className="text-line-strong">·</span>
-                      <span>{programme.stepCount} steps</span>
+                      <span>{programme.areaCount} areas</span>
+                      {/* A planned programme has no steps yet, and saying
+                          "0 steps" would read as a failure rather than a stage. */}
+                      {programme.status === "complete" ? (
+                        <>
+                          <span aria-hidden="true" className="text-line-strong">·</span>
+                          <span>{programme.stepCount} steps</span>
+                        </>
+                      ) : (
+                        <>
+                          <span aria-hidden="true" className="text-line-strong">·</span>
+                          <span className="text-[var(--warn-ink)]">awaiting your approval</span>
+                        </>
+                      )}
                     </p>
                   </Link>
                 </li>

@@ -106,6 +106,40 @@ export default function MethodPage() {
           </ul>
         </Section>
 
+        <Section title="The audit programme designer">
+          <p>
+            A separate pipeline, reached from the Programme tab. It answers a different question: not
+            what changed this week, but what an AML/CFT audit of this firm should actually cover.
+          </p>
+          <p>
+            Four agents run, with a human decision in the middle. A <strong>Risk Agent</strong> reads
+            the intake selections and assesses what this firm is exposed to; it has no tools, because
+            its job is judgement about the firm rather than research. In parallel, a{" "}
+            <strong>MAS Agent</strong> searches the instruments themselves — the only agent with
+            network access — and extracts obligations, each tied to a page it actually retrieved. A{" "}
+            <strong>Scope Agent</strong> then merges the two into proposed control areas, and an area
+            it cannot tie to both an assessed risk and a citable obligation is dropped rather than
+            shown.
+          </p>
+          <p>
+            The pipeline stops there. You approve or drop each area, and only then does the{" "}
+            <strong>Evidence Agent</strong> write testing steps — for the areas you kept, and no
+            others. That checkpoint is not a confirmation dialog: it is the point at which the
+            expensive stage is pointed at the right work.
+          </p>
+          <p>
+            Every stage is persisted and shown with what it produced, what it cost and anything it
+            dropped. The intake, the risk factors and the obligations sit ahead of the programme on
+            the page rather than behind it, because the reasoning is what lets an auditor disagree
+            with a conclusion by pointing at the step that produced it.
+          </p>
+          <p>
+            A findings-and-reporting stage is deliberately absent. Findings require evidence from
+            fieldwork that has not happened yet, and a tool that generated them from a programme
+            alone would be inventing audit results.
+          </p>
+        </Section>
+
         <Section title={`Source allowlist (${allDomains.length} publishers)`}>
           <p className="mb-4">
             If something your team relies on is missing, it can be added — the list is a single file
