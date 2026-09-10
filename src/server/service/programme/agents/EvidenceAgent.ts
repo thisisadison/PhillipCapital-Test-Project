@@ -5,6 +5,7 @@ import { SYNTHESIS_MODEL } from "@/server/service/AnthropicClient";
 import { usageFrom, type UsageTotals } from "@/server/service/UsageTracking";
 import type { AuditStep, Obligation, RiskFactor, ScopeArea } from "@/server/domain/programme";
 import { betaFieldsFor, clamp, collapse, effortFor, hashId } from "./shared";
+import type { AuditDomain } from "@/server/domain/auditDomain";
 
 /**
  * Evidence Agent — writes the testing procedures, and only for approved areas.
@@ -36,9 +37,10 @@ const draftSchema = z.object({
   ),
 });
 
-const SYSTEM_PROMPT = [
-  "You are an experienced internal auditor writing the testing procedures for an AML/CFT audit at a",
-  "Singapore capital markets firm.",
+function systemPrompt(domain: AuditDomain): string {
+  return [
+  `You are an experienced internal auditor writing the testing procedures for a ${domain.label}`,
+  "audit at a Singapore capital markets services licence holder.",
   "",
   "You are writing for a colleague who will perform this fieldwork. They know how to audit. What",
   "they need from you is what to test, against what criterion, and what to obtain as evidence.",
@@ -46,14 +48,16 @@ const SYSTEM_PROMPT = [
   "How you write a step:",
   "- It starts with a verb an auditor performs: inspect, reperform, trace, observe, recalculate.",
   "  'Assess the adequacy of' is not a procedure — it is the conclusion the procedure supports.",
-  "- The evidence is a document or extract the auditor can actually request by name: the screening",
-  "  system's match log, the CDD file, the monitoring rule configuration, the MLRO's escalation",
-  "  register.",
+  "- The evidence is something the auditor can actually request by name.",
+  "",
+  domain.evidenceBrief,
+  "",
   "- Sampling says how the population is defined and how items are selected. Where a full",
   "  population can be tested, say so instead.",
   "- The criterion is the obligation listed for that area. Test against what the instrument",
   "  requires, not against general good practice.",
-].join("\n");
+  ].join("\n");
+}
 
 export interface EvidenceAgentResult {
   /** The same areas, with steps filled in on the approved ones. */
@@ -64,6 +68,7 @@ export interface EvidenceAgentResult {
 
 export async function runEvidenceAgent(
   client: Anthropic,
+  domain: AuditDomain,
   areas: ScopeArea[],
   riskFactors: RiskFactor[],
   obligations: Obligation[],
@@ -82,7 +87,7 @@ export async function runEvidenceAgent(
     max_tokens: 12000,
     ...betaFieldsFor(SYNTHESIS_MODEL),
     output_config: { ...effortFor(SYNTHESIS_MODEL), format: zodOutputFormat(draftSchema) },
-    system: SYSTEM_PROMPT,
+    system: systemPrompt(domain),
     messages: [
       { role: "user", content: buildPrompt(handles, riskById, obligationById) },
     ],

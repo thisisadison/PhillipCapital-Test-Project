@@ -61,6 +61,7 @@ export class FileProgrammeRepository implements ProgrammeRepository {
       .filter((programme): programme is AuditProgramme => programme !== null)
       .map((programme) => ({
         id: programme.id,
+        domain: programme.domain,
         title: programme.title,
         status: programme.status,
         createdAt: programme.createdAt,

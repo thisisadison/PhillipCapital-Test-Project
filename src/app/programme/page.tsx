@@ -2,6 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/ui/components/SiteHeader";
 import { ProgrammeForm } from "@/ui/components/ProgrammeForm";
+import { allAuditDomains } from "@/server/domain/auditDomain";
+import { EXAMPLE_PROFILES } from "@/server/domain/exampleProfiles";
+import "@/server/domain/domains";
 import { formatTimestamp } from "@/shared/dates";
 import { TIMEZONE } from "@/server/config";
 import { getProgrammeRepository } from "@/server/repository";
@@ -18,14 +21,15 @@ export default async function ProgrammeIndexPage() {
       <SiteHeader current="/programme" />
 
       <main className="pt-10 sm:pt-14">
-        <p className="meta uppercase tracking-[0.16em] text-ink-faint">AML / CFT</p>
+        <p className="meta uppercase tracking-[0.16em] text-ink-faint">Internal Audit</p>
         <h1 className="display mt-3 text-[2.25rem] leading-[1.1] text-ink sm:text-[2.75rem]">
           Audit Programme
         </h1>
         <p className="mt-5 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          The four dimensions below are the ones MAS requires a capital markets licence holder to
-          assess its ML/TF risk against — customers, products, channels and countries. Answering
-          them is the risk assessment; the programme is built from it.
+          Pick what you are auditing and answer its risk dimensions. Those dimensions are lifted
+          from the framework that governs each area — MAS&apos;s four ML/TF dimensions for financial
+          crime, the Technology Risk Management Guidelines and the ITGC pillars for technology — so
+          answering them is the risk assessment, not a questionnaire we invented.
         </p>
         <p className="mt-3 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
           Four agents run, with your approval in the middle. Two go first and in parallel — one
@@ -36,7 +40,7 @@ export default async function ProgrammeIndexPage() {
         </p>
 
         <div className="mt-8">
-          <ProgrammeForm />
+          <ProgrammeForm domains={allAuditDomains()} examples={EXAMPLE_PROFILES} />
         </div>
 
         <section className="mt-14">

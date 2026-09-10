@@ -3,25 +3,27 @@ import { z } from "zod";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { RESEARCH_MODEL } from "@/server/service/AnthropicClient";
 import { addUsage, usageFrom, ZERO_USAGE, type UsageTotals } from "@/server/service/UsageTracking";
-import {
-  AML_PROGRAMME_DOMAINS,
-  MAX_ALLOWED_DOMAINS,
-} from "@/server/service/research/sourceCatalogue";
+import { MAX_ALLOWED_DOMAINS } from "@/server/service/research/sourceCatalogue";
 import { SourceIndex } from "@/server/service/synthesis/sourceIndex";
 import type { RetrievedSource } from "@/server/service/research/ResearchService";
 import type { Obligation } from "@/server/domain/programme";
-import { OBLIGATION_THEMES, formatThemes, resolveThemeId } from "@/server/domain/masFramework";
+import { resolveThemeId, type AuditDomain } from "@/server/domain/auditDomain";
 import { describeIntake, type RiskIntake } from "@/server/domain/riskIntake";
 import { betaFieldsFor, clamp, collapse, effortFor, hashId, tuningFor } from "./shared";
 
 /**
- * MAS Agent — establishes which obligations actually apply to this firm.
+ * Obligations Agent — establishes which obligations actually apply to this firm.
  *
  * The only agent in the pipeline with network access, and the only one that
  * costs search fees, so it is capped tightly. It runs in two passes: a search
  * conversation that reads the instruments, then a structured extraction that
  * turns what it read into citable obligations. The split exists because asking
  * one call to both search and emit strict JSON reliably produces worse of both.
+ *
+ * Which instruments it reaches for, and which hostnames it may search, come
+ * from the audit domain. For an AML audit that is the MAS Notice and FATF; for
+ * a technology audit it is the TRM Guidelines and the Cyber Hygiene Notice.
+ * Nothing about the mechanism differs.
  */
 
 const MAX_SEARCHES = numberFromEnv("PROGRAMME_MAX_SEARCHES", 4);
@@ -40,16 +42,20 @@ const draftSchema = z.object({
   ),
 });
 
-const SEARCH_SYSTEM_PROMPT = [
-  "You are a financial crime compliance specialist establishing the AML/CFT obligations that apply",
-  "to a Singapore capital markets firm, for an Internal Audit team that will test against them.",
-  "",
-  "You are assembling audit criteria, not writing an overview. What matters is the instrument, the",
-  "paragraph, and what it actually requires a firm to do.",
-  "",
-  "Work from the search results only. Never cite a notice or paragraph number the results did not",
-  "show you, and never state a URL that did not appear in a result.",
-].join("\n");
+function searchSystemPrompt(domain: AuditDomain): string {
+  return [
+    `You are establishing the obligations that apply to a Singapore capital markets services`,
+    `licence holder in the area of ${domain.label}, for an Internal Audit team that will test`,
+    "against them.",
+    "",
+    "You are assembling audit criteria, not writing an overview. What matters is the instrument,",
+    "the paragraph, and what it actually requires a firm to do.",
+    "",
+    "Work from the search results only. Never cite a notice or paragraph number the results did",
+    "not show you, and never state a URL that did not appear in a result. A confident wrong",
+    "citation survives review in a way an obvious gap does not, so a gap is the safer failure.",
+  ].join("\n");
+}
 
 const EXTRACT_SYSTEM_PROMPT = [
   "You convert research notes about AML/CFT obligations into a structured list.",
@@ -59,14 +65,18 @@ const EXTRACT_SYSTEM_PROMPT = [
   "auditor cannot open and read is worse than one fewer obligation.",
 ].join("\n");
 
-export interface MasAgentResult {
+export interface ObligationsAgentResult {
   obligations: Obligation[];
   sources: SourceIndex;
   notes: string[];
   usage: UsageTotals;
 }
 
-export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promise<MasAgentResult> {
+export async function runObligationsAgent(
+  client: Anthropic,
+  domain: AuditDomain,
+  intake: RiskIntake,
+): Promise<ObligationsAgentResult> {
   const notes: string[] = [];
   let usage: UsageTotals = ZERO_USAGE;
 
@@ -74,22 +84,19 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
     {
       role: "user",
       content: [
-        "Establish the AML/CFT obligations an internal audit of this firm would test against.",
+        `Establish the ${domain.label} obligations an internal audit of this firm would test against.`,
         "",
         "## The firm",
         describeIntake(intake),
         "",
         "## What to find",
-        "The applicable MAS requirements first — the relevant Notice and its paragraphs — then FATF",
-        "or Wolfsberg guidance where it adds something MAS does not cover. Prioritise obligations",
-        "the profile above actually implicates, and ignore obligations for business this firm does",
-        "not conduct.",
+        domain.obligationsBrief,
         "",
         "## Themes to cover",
         "Work through these, spending your searches on the ones this firm's profile implicates most.",
         "You are not required to reach all of them — an honest gap is better than a padded citation.",
         "",
-        formatThemes(),
+        formatThemes(domain),
         "",
         "For each obligation record the instrument and paragraph, what it requires, and the URL of",
         "the result you took it from. Write prose notes.",
@@ -106,14 +113,14 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
       max_tokens: 8000,
       ...tuningFor(RESEARCH_MODEL),
       system: [
-        { type: "text", text: SEARCH_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+        { type: "text", text: searchSystemPrompt(domain), cache_control: { type: "ephemeral" } },
       ],
       tools: [
         {
           type: "web_search_20260209",
           name: "web_search",
           max_uses: MAX_SEARCHES,
-          allowed_domains: AML_PROGRAMME_DOMAINS.slice(0, MAX_ALLOWED_DOMAINS),
+          allowed_domains: domain.sourceDomains.slice(0, MAX_ALLOWED_DOMAINS),
         },
       ],
       messages,
@@ -171,7 +178,7 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
           sources.format(),
           "",
           "## Themes",
-          formatThemes(),
+          formatThemes(domain),
           "",
           "Return `reference` (instrument and paragraph), `requirement` (what it requires, one or",
           "two sentences), `theme` (one theme id from the list above), and `sourceId`. Six to",
@@ -204,7 +211,7 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
       id: hashId(reference),
       reference: clamp(reference, 160),
       requirement: clamp(requirement, 500),
-      theme: resolveThemeId(raw.theme),
+      theme: resolveThemeId(domain, raw.theme),
       sourceName: source.title.split(/\s[|–—-]\s/).pop()?.trim() || source.url,
       sourceUrl: source.url,
     });
@@ -217,7 +224,7 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
   // Coverage is reported, never quietly padded. A theme the search did not
   // reach is a real gap in the programme and the auditor has to see it.
   const covered = new Set(obligations.flatMap((item) => (item.theme ? [item.theme] : [])));
-  const missed = OBLIGATION_THEMES.filter((theme) => !covered.has(theme.id));
+  const missed = domain.themes.filter((theme) => !covered.has(theme.id));
   if (missed.length > 0) {
     notes.push(
       `No obligation found for ${missed.length} theme${missed.length === 1 ? "" : "s"}: ${missed
@@ -227,6 +234,13 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
   }
 
   return { obligations, sources, notes, usage };
+}
+
+/** The theme catalogue as it appears in the agent's brief. */
+function formatThemes(domain: AuditDomain): string {
+  return domain.themes
+    .map((theme) => `- \`${theme.id}\` ${theme.label} — ${theme.scope}`)
+    .join("\n");
 }
 
 function numberFromEnv(name: string, fallback: number): number {

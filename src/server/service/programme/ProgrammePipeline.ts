@@ -6,15 +6,17 @@ import {
   type AuditProgramme,
   type ScopeArea,
 } from "@/server/domain/programme";
-import { OBLIGATION_THEMES } from "@/server/domain/masFramework";
 import {
   countSelections,
   labelsFor,
   sanitiseIntake,
+  selectionsFor,
   type RiskIntake,
 } from "@/server/domain/riskIntake";
+import { getAuditDomain, type AuditDomain } from "@/server/domain/auditDomain";
+import "@/server/domain/domains";
 import { runRiskAgent } from "./agents/RiskAgent";
-import { runMasAgent } from "./agents/MasAgent";
+import { runObligationsAgent } from "./agents/ObligationsAgent";
 import { runScopeAgent } from "./agents/ScopeAgent";
 import { runEvidenceAgent } from "./agents/EvidenceAgent";
 import { clamp, collapse } from "./agents/shared";
@@ -42,7 +44,17 @@ export interface PlanResult {
 
 export async function planProgramme(rawIntake: RiskIntake): Promise<PlanResult> {
   const client = getAnthropicClient();
-  const intake = sanitiseIntake(rawIntake);
+  const domain = getAuditDomain(rawIntake.domain);
+
+  // Re-sanitised here rather than trusted from the route: this is the last
+  // point before the selections reach a prompt, and a required dimension left
+  // empty would produce an assessment that cannot be defended as the one the
+  // framework asks for.
+  const { intake, problems } = sanitiseIntake(rawIntake);
+  if (problems.length > 0) {
+    throw new Error(problems.map((problem) => problem.message).join("; "));
+  }
+
   const runs: AgentRun[] = [];
 
   // Risk and MAS are independent: one reasons about the firm, the other reads
@@ -51,8 +63,8 @@ export async function planProgramme(rawIntake: RiskIntake): Promise<PlanResult> 
   const riskStarted = nowIso();
   const masStarted = nowIso();
   const [risk, mas] = await Promise.all([
-    runRiskAgent(client, intake),
-    runMasAgent(client, intake),
+    runRiskAgent(client, domain, intake),
+    runObligationsAgent(client, domain, intake),
   ]);
 
   runs.push(
@@ -70,20 +82,20 @@ export async function planProgramme(rawIntake: RiskIntake): Promise<PlanResult> 
   );
   runs.push(
     recordRun({
-      agent: "mas",
+      agent: "obligations",
       startedAt: masStarted,
       model: RESEARCH_MODEL,
       produced:
         `${mas.obligations.length} obligations across ` +
         `${new Set(mas.obligations.flatMap((item) => (item.theme ? [item.theme] : []))).size} ` +
-        `of ${OBLIGATION_THEMES.length} themes, from ${mas.sources.size} sources`,
+        `of ${domain.themes.length} themes, from ${mas.sources.size} sources`,
       usage: mas.usage,
       notes: mas.notes,
     }),
   );
 
   const scopeStarted = nowIso();
-  const scope = await runScopeAgent(client, intake, risk.factors, mas.obligations);
+  const scope = await runScopeAgent(client, domain, intake, risk.factors, mas.obligations);
   runs.push(
     recordRun({
       agent: "scope",
@@ -97,7 +109,8 @@ export async function planProgramme(rawIntake: RiskIntake): Promise<PlanResult> 
 
   const programme: AuditProgramme = {
     id: newProgrammeId(),
-    title: titleFor(intake),
+    domain: domain.id,
+    title: titleFor(domain, intake),
     status: "planned",
     createdAt: nowIso(),
     intake,
@@ -141,6 +154,7 @@ export async function draftApprovedSteps(
   const startedAt = nowIso();
   const evidence = await runEvidenceAgent(
     client,
+    getAuditDomain(programme.domain),
     scopeAreas,
     programme.riskFactors,
     programme.obligations,
@@ -199,20 +213,20 @@ function recordRun(input: {
 }
 
 /**
- * Named from the products in scope, so a list of programmes is readable without
- * opening them. Falls back to the generic title only when nothing was selected,
- * which the schema already makes near-impossible.
+ * Named from whichever dimension the domain says identifies an audit — products
+ * for AML, the estate for technology — so a list of programmes is readable
+ * without opening them.
  */
-function titleFor(intake: RiskIntake): string {
-  const products = labelsFor("product", intake.product);
+function titleFor(domain: AuditDomain, intake: RiskIntake): string {
+  const labels = labelsFor(domain, domain.titleDimension, selectionsFor(intake, domain.titleDimension));
   const subject =
-    products.length === 0
+    labels.length === 0
       ? ""
-      : products.length <= 2
-        ? products.join(" and ")
-        : `${products[0]} and ${products.length - 1} other lines`;
+      : labels.length <= 2
+        ? labels.join(" and ")
+        : `${labels[0]} and ${labels.length - 1} more`;
 
-  return clamp(subject ? `AML/CFT audit — ${subject}` : "AML/CFT audit programme", 120);
+  return clamp(subject ? `${domain.titlePrefix} — ${subject}` : `${domain.titlePrefix} programme`, 120);
 }
 
 function newProgrammeId(): string {

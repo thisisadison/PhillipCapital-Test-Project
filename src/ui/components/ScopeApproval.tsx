@@ -9,7 +9,12 @@ import {
   type RiskFactor,
   type ScopeArea,
 } from "@/server/domain/programme";
-import { getQuestion } from "@/server/domain/riskIntake";
+import {
+  getAuditDomain,
+  getDimension,
+  type AuditDomainId,
+} from "@/server/domain/auditDomain";
+import "@/server/domain/domains";
 import { seriesColor } from "@/ui/charts/palette";
 import { DimensionRail, DimensionTag } from "./DimensionMark";
 import { RiskDot } from "./RiskDot";
@@ -34,15 +39,18 @@ const COST_PER_AREA_USD = 0.02;
 
 export function ScopeApproval({
   programmeId,
+  domainId,
   areas,
   riskFactors,
   obligations,
 }: {
   programmeId: string;
+  domainId: AuditDomainId;
   areas: ScopeArea[];
   riskFactors: RiskFactor[];
   obligations: Obligation[];
 }) {
+  const domain = getAuditDomain(domainId);
   const [approved, setApproved] = useState<string[]>(() => areas.map((area) => area.id));
   const [state, setState] = useState<State>({ kind: "idle" });
   const router = useRouter();
@@ -97,8 +105,8 @@ export function ScopeApproval({
       <ul className="mt-6 space-y-4">
         {areas.map((area) => {
           const checked = approved.includes(area.id);
-          const dimension = dominantDimension(area, riskFactors);
-          const question = dimension ? getQuestion(dimension) : null;
+          const dimension = dominantDimension({ domain: domainId, riskFactors }, area);
+          const entry = dimension ? getDimension(domain, dimension) : null;
 
           return (
             <li key={area.id}>
@@ -110,7 +118,7 @@ export function ScopeApproval({
                 {/* The rail carries the dimension this area mostly answers, so
                     an auditor can see at a glance whether unticking one leaves
                     a dimension with no coverage at all. */}
-                <DimensionRail dimension={dimension} />
+                <DimensionRail domain={domain} dimension={dimension} />
 
                 <div className="flex items-start gap-3">
                   <input
@@ -120,7 +128,9 @@ export function ScopeApproval({
                     disabled={busy}
                     className="mt-1 h-4 w-4 shrink-0"
                     style={
-                      question ? { accentColor: seriesColor(question.colorSlot) } : undefined
+                      entry?.colorSlot
+                        ? { accentColor: seriesColor(entry.colorSlot) }
+                        : undefined
                     }
                   />
 
@@ -132,7 +142,7 @@ export function ScopeApproval({
                           {RISK_LABELS[area.riskRating]} priority
                         </span>
                       </p>
-                      <DimensionTag dimension={dimension} />
+                      <DimensionTag domain={domain} dimension={dimension} />
                       {checked ? null : (
                         <span className="meta text-ink-faint">excluded from drafting</span>
                       )}

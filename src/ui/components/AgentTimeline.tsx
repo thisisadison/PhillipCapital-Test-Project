@@ -16,7 +16,11 @@ import { formatUsd } from "@/server/service/UsageTracking";
 
 const AGENTS: { id: AgentRun["agent"]; name: string; job: string }[] = [
   { id: "risk", name: "Risk Agent", job: "Assesses what this firm is exposed to" },
-  { id: "mas", name: "MAS Agent", job: "Reads the obligations that apply, with sources" },
+  {
+    id: "obligations",
+    name: "Obligations Agent",
+    job: "Reads the requirements that apply, with sources",
+  },
   { id: "scope", name: "Scope Agent", job: "Merges risk and obligations into a proposed scope" },
   { id: "evidence", name: "Evidence Agent", job: "Writes testing steps for approved areas only" },
 ];
@@ -35,7 +39,7 @@ export function AgentTimeline({ runs, awaitingApproval }: { runs: AgentRun[]; aw
       <ol className="mt-4">
         {AGENTS.map((agent, index) => {
           const run = byAgent.get(agent.id);
-          const parallel = agent.id === "mas";
+          const parallel = agent.id === "obligations";
 
           return (
             <li

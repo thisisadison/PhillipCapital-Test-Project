@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { planProgramme } from "@/server/service/programme/ProgrammePipeline";
 import { runExclusive } from "@/server/service/runGuard";
 import { getProgrammeRepository } from "@/server/repository";
-import { riskIntakeSchema } from "@/server/domain/riskIntake";
+import { riskIntakeSchema, sanitiseIntake } from "@/server/domain/riskIntake";
+import "@/server/domain/domains";
 import { programmeErrorResponse } from "./errors";
 
 /**
- * Stage one: plan. Runs the Risk, MAS and Scope agents and stops.
+ * Stage one: plan. Runs the Risk, Obligations and Scope agents and stops.
  *
  * It deliberately does not produce a finished programme. The response is a
  * proposed scope for the auditor to approve, and drafting the steps is a
@@ -35,6 +36,15 @@ export async function POST(request: Request) {
       { error: parsed.error.issues[0]?.message ?? "That intake is incomplete." },
       { status: 400 },
     );
+  }
+
+  // Shape is valid; now check it against the chosen domain's own rules. A
+  // dimension the framework mandates cannot be left blank, and the message
+  // names which one rather than saying "incomplete".
+  const { problems } = sanitiseIntake(parsed.data);
+  const firstProblem = problems[0];
+  if (firstProblem) {
+    return NextResponse.json({ error: firstProblem.message }, { status: 400 });
   }
 
   const [latest] = await repository.listSummaries(1);

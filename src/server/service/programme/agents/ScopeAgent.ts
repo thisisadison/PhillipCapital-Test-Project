@@ -6,6 +6,7 @@ import { usageFrom, type UsageTotals } from "@/server/service/UsageTracking";
 import type { Obligation, RiskFactor, ScopeArea } from "@/server/domain/programme";
 import { RISK_ORDER } from "@/server/domain/programme";
 import { describeIntake, type RiskIntake } from "@/server/domain/riskIntake";
+import { getDimension, type AuditDomain } from "@/server/domain/auditDomain";
 import { betaFieldsFor, clamp, collapse, effortFor, hashId, normaliseRisk } from "./shared";
 
 /**
@@ -39,8 +40,10 @@ const draftSchema = z.object({
   ),
 });
 
-const SYSTEM_PROMPT = [
-  "You are an internal audit manager scoping an AML/CFT audit at a Singapore capital markets firm.",
+function systemPrompt(domain: AuditDomain): string {
+  return [
+  `You are an internal audit manager scoping a ${domain.label} audit at a Singapore capital`,
+  "markets services licence holder.",
   "",
   "You are given an assessment of what this firm is exposed to, and the obligations it is subject",
   "to. You decide where the fieldwork goes: which control areas this audit will cover, in what",
@@ -57,7 +60,10 @@ const SYSTEM_PROMPT = [
   "  audit that puts every area on customer risk has not scoped, it has specialised.",
   "- The rationale names this firm's circumstances. If it would read identically for any brokerage",
   "  in Singapore, it is not a rationale.",
-].join("\n");
+  "",
+  domain.scopeBrief,
+  ].join("\n");
+}
 
 export interface ScopeAgentResult {
   scopeSummary: string;
@@ -68,6 +74,7 @@ export interface ScopeAgentResult {
 
 export async function runScopeAgent(
   client: Anthropic,
+  domain: AuditDomain,
   intake: RiskIntake,
   riskFactors: RiskFactor[],
   obligations: Obligation[],
@@ -85,11 +92,11 @@ export async function runScopeAgent(
     max_tokens: 8000,
     ...betaFieldsFor(SYNTHESIS_MODEL),
     output_config: { ...effortFor(SYNTHESIS_MODEL), format: zodOutputFormat(draftSchema) },
-    system: SYSTEM_PROMPT,
+    system: systemPrompt(domain),
     messages: [
       {
         role: "user",
-        content: buildPrompt(intake, riskHandles, obligationHandles),
+        content: buildPrompt(domain, intake, riskHandles, obligationHandles),
       },
     ],
   });
@@ -169,21 +176,22 @@ function resolve<T>(handles: string[], catalogue: Map<string, T>): T[] {
 }
 
 function buildPrompt(
+  domain: AuditDomain,
   intake: RiskIntake,
   riskHandles: Map<string, RiskFactor>,
   obligationHandles: Map<string, Obligation>,
 ): string {
-  const risks = [...riskHandles].map(
-    ([handle, factor]) =>
-      `- ${handle} [${factor.severity} · ${factor.dimension}] ${factor.factor}\n  ${factor.rationale}`,
-  );
+  const risks = [...riskHandles].map(([handle, factor]) => {
+    const dimension = getDimension(domain, factor.dimension)?.label ?? factor.dimension;
+    return `- ${handle} [${factor.severity} · ${dimension}] ${factor.factor}\n  ${factor.rationale}`;
+  });
   const obligations = [...obligationHandles].map(
     ([handle, obligation]) =>
       `- ${handle} [${obligation.theme ?? "untagged"}] ${obligation.reference} — ${obligation.requirement}`,
   );
 
   return [
-    "Scope the AML/CFT audit for this firm.",
+    `Scope the ${domain.label} audit for this firm.`,
     "",
     "## The firm",
     describeIntake(intake),
@@ -199,8 +207,7 @@ function buildPrompt(
     "it for an audit committee paper — no preamble, no restating the question.",
     "",
     "Then return four to seven control areas. For each:",
-    "- `title` — the control area, as it would appear on the programme, e.g. 'Beneficial ownership",
-    "  identification for corporate accounts'",
+    "- `title` — the control area, as it would appear on the programme",
     "- `riskRating` — `high`, `medium` or `low`: the fieldwork priority you assign it",
     "- `rationale` — two sentences on why this area is in scope at this firm specifically",
     "- `addressesRiskFactors` — the R handles above that this area answers",

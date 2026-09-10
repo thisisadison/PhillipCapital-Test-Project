@@ -190,15 +190,31 @@ export function isPrimarySource(url: string): boolean {
 }
 
 /**
- * Sources an AML audit programme may cite.
+ * Sources an audit programme may cite, per audit domain.
  *
  * Narrower than any digest category: a programme states obligations an auditor
  * will test against, so it draws only on the bodies that actually set them —
- * no trade press, no vendor commentary.
+ * no trade press, no vendor commentary. A vendor's own white paper on its
+ * product is the last thing that should decide what an auditor tests it against.
  */
-export const AML_PROGRAMME_DOMAINS: string[] = domainsOf(
+export const AML_SOURCE_DOMAINS: string[] = domainsOf(
   FINANCIAL_CRIME_BODIES,
   FINANCIAL_CRIME_PROFESSION,
   REGULATORS_APAC,
   STANDARD_SETTERS,
+);
+
+/**
+ * Technology audits draw on a different set: MAS for the supervisory
+ * expectations and the Cyber Hygiene Notice, CSA and the other national cyber
+ * agencies for baseline practice, and the standard setters for NIST, ISO 27001
+ * and COBIT. IMDA and PDPC are included because a technology audit that touches
+ * customer data touches the PDPA.
+ */
+export const TECHNOLOGY_SOURCE_DOMAINS: string[] = domainsOf(
+  RESILIENCE_BODIES,
+  REGULATORS_APAC,
+  STANDARD_SETTERS,
+  AI_GOVERNANCE_BODIES,
+  REGULATORS_GLOBAL,
 );

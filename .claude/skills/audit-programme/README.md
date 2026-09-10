@@ -21,11 +21,15 @@ Say what you want in your own words:
 
 > Design an AML audit programme for our retail and institutional brokerage.
 
+or
+
+> Scope a technology audit of our trading platform and cloud estate.
+
 Claude loads the skill and works the stages:
 
 | Stage | Output | Who decides |
 |---|---|---|
-| 0 Intake | `01-risk-profile.md` | You answer five dimensions |
+| 0 Audit type + intake | `01-risk-profile.md` | You pick the type, then answer its dimensions |
 | 1 Risk assessment | `02-risk-factors.md` | Claude, from the profile alone |
 | 2 Obligations | `03-obligations.md` | Claude, with web search |
 | 3 Proposed scope | `04-proposed-scope.md` | Claude proposes |
@@ -51,6 +55,16 @@ is written to refuse them.
 A workspace per audit keeps each set of working papers separate. To rescope
 an audit in progress, run it again in the same workspace and the earlier
 papers stay as a record of what changed.
+
+## Which audits it covers
+
+AML / financial crime, and technology / IT. Each is scoped against its own
+framework — MAS's four ML/TF risk dimensions for the first, the MAS
+Technology Risk Management Guidelines and the ITGC pillars for the second —
+so the questions, the obligations and the sources all change with the type.
+
+For an audit type it does not cover, it will still help, but it says so
+rather than implying the same grounding.
 
 ## Keeping the references current
 

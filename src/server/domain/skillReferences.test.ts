@@ -2,10 +2,10 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderSkillReferences } from "./skillReferences";
-import { INTAKE_QUESTIONS } from "./riskIntake";
-import { OBLIGATION_THEMES } from "./masFramework";
+import { allAuditDomains } from "./auditDomain";
+import "./domains";
 
-const REFERENCE_DIR = join(process.cwd(), ".claude/skills/aml-audit-programme/references");
+const REFERENCE_DIR = join(process.cwd(), ".claude/skills/audit-programme/references");
 
 const rendered = renderSkillReferences();
 
@@ -22,49 +22,83 @@ describe("the checked-in skill references", () => {
   }
 });
 
-describe("risk-dimensions.md", () => {
-  const body = rendered["risk-dimensions.md"] ?? "";
+describe("audit-types.md", () => {
+  const body = rendered["audit-types.md"] ?? "";
 
-  it("offers every option the app offers, in the auditor's own words", () => {
-    for (const question of INTAKE_QUESTIONS) {
-      expect(body).toContain(question.label);
-      for (const option of question.options) expect(body).toContain(option.label);
-    }
+  it("lists every registered audit type", () => {
+    for (const domain of allAuditDomains()) expect(body).toContain(domain.label);
   });
 
-  it("marks the optional dimension and leaves MAS's four unmarked", () => {
-    const optional = body.match(/^## .*\(optional\)$/gm) ?? [];
-    expect(optional).toHaveLength(1);
-    expect(optional[0]).toContain("Known control weaknesses");
-  });
-});
-
-describe("obligation-themes.md", () => {
-  const body = rendered["obligation-themes.md"] ?? "";
-
-  it("lists every theme", () => {
-    for (const theme of OBLIGATION_THEMES) expect(body).toContain(theme.label);
+  it("tells the model to settle the type before anything else", () => {
+    expect(body).toMatch(/before anything else/i);
   });
 
-  it("tells the model to report the themes it missed", () => {
-    expect(body).toMatch(/gap/i);
-  });
-
-  it("names no paragraph numbers — those are retrieved, never recalled", () => {
-    expect(body).not.toMatch(/paragraph\s+\d/i);
+  it("tells it to say so when the audit type is not covered", () => {
+    // The failure mode this guards against is the skill confidently scoping an
+    // operations audit as though it had a framework behind it.
+    expect(body).toMatch(/not listed/i);
   });
 });
 
-describe("source-policy.md", () => {
-  const body = rendered["source-policy.md"] ?? "";
+describe.each(allAuditDomains().map((domain) => [domain.id, domain] as const))(
+  "the %s references",
+  (id, domain) => {
+    const dimensions = rendered[`${id}/risk-dimensions.md`] ?? "";
+    const themes = rendered[`${id}/obligation-themes.md`] ?? "";
+    const sources = rendered[`${id}/source-policy.md`] ?? "";
 
-  it("lists the primary bodies an audit programme may cite", () => {
-    expect(body).toContain("mas.gov.sg");
-    expect(body).toContain("fatf-gafi.org");
+    it("offers every option the app offers, in the auditor's own words", () => {
+      for (const dimension of domain.dimensions) {
+        expect(dimensions).toContain(dimension.label);
+        for (const option of dimension.options) expect(dimensions).toContain(option.label);
+      }
+    });
+
+    it("marks exactly one dimension optional — the framework's own are required", () => {
+      const optional = dimensions.match(/^## .*\(optional\)$/gm) ?? [];
+      expect(optional).toHaveLength(1);
+    });
+
+    it("names the framework the dimensions come from", () => {
+      expect(dimensions).toContain(domain.frameworkNote);
+    });
+
+    it("lists every theme and tells the model to report the gaps", () => {
+      for (const theme of domain.themes) expect(themes).toContain(theme.label);
+      expect(themes).toMatch(/gap/i);
+    });
+
+    it("names no paragraph numbers — those are retrieved, never recalled", () => {
+      expect(themes).not.toMatch(/paragraph\s+\d/i);
+    });
+
+    it("lists the domain's own source hosts and no others", () => {
+      for (const host of domain.sourceDomains) expect(sources).toContain(host);
+      // Trade press is excluded from every programme allowlist; if one leaked
+      // in, an auditor could end up testing against a magazine article.
+      expect(sources).not.toContain("accountingtoday.com");
+      expect(sources).not.toContain("complianceweek.com");
+    });
+
+    it("distinguishes binding obligation from guidance", () => {
+      expect(sources).toMatch(/guidance/i);
+    });
+  },
+);
+
+describe("the two domains' references are actually different", () => {
+  it("does not ask a technology auditor about customer due diligence", () => {
+    const tech = rendered["technology/risk-dimensions.md"] ?? "";
+
+    expect(tech).not.toMatch(/politically exposed/i);
+    expect(tech).not.toMatch(/beneficial ownership/i);
+    expect(tech).toMatch(/privileged/i);
   });
 
-  it("excludes trade press, which the app's programme allowlist also excludes", () => {
-    expect(body).not.toContain("accountingtoday.com");
-    expect(body).not.toContain("complianceweek.com");
+  it("does not ask an AML auditor about patch management", () => {
+    const aml = rendered["aml/risk-dimensions.md"] ?? "";
+
+    expect(aml).not.toMatch(/patch/i);
+    expect(aml).toMatch(/politically exposed/i);
   });
 });

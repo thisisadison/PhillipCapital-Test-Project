@@ -12,17 +12,21 @@
  *
  *   npx tsx scripts/generateSkillReferences.ts
  */
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { renderSkillReferences } from "../src/server/domain/skillReferences";
 
-const OUT_DIR = join(process.cwd(), ".claude/skills/aml-audit-programme/references");
+const OUT_DIR = join(process.cwd(), ".claude/skills/audit-programme/references");
 
 async function main() {
-  await mkdir(OUT_DIR, { recursive: true });
+  // Cleared first so a removed audit type does not leave its folder behind,
+  // where the skill would keep reading a framework the app no longer has.
+  await rm(OUT_DIR, { recursive: true, force: true });
 
   for (const [name, body] of Object.entries(renderSkillReferences())) {
-    await writeFile(join(OUT_DIR, name), body, "utf8");
+    const path = join(OUT_DIR, name);
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, body, "utf8");
     console.log(`wrote references/${name}`);
   }
 }

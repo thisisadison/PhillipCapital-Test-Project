@@ -6,8 +6,9 @@ import {
   totalSteps,
   type AuditProgramme,
 } from "@/server/domain/programme";
-import { INTAKE_QUESTIONS, labelsFor } from "@/server/domain/riskIntake";
-import { getObligationTheme } from "@/server/domain/masFramework";
+import { labelsFor, selectionsFor } from "@/server/domain/riskIntake";
+import { getAuditDomain, getTheme, type AuditDomain } from "@/server/domain/auditDomain";
+import "@/server/domain/domains";
 import { formatTimestamp } from "@/shared/dates";
 import { formatUsd } from "@/server/service/UsageTracking";
 import { TIMEZONE } from "@/server/config";
@@ -35,10 +36,11 @@ import { RiskDot } from "./RiskDot";
 export function ProgrammeView({ programme }: { programme: AuditProgramme }) {
   const planned = programme.status === "planned";
   const stepCount = totalSteps(programme);
+  const domain = getAuditDomain(programme.domain);
 
   return (
     <>
-      <p className="meta uppercase tracking-[0.16em] text-ink-faint">AML / CFT audit programme</p>
+      <p className="meta uppercase tracking-[0.16em] text-ink-faint">{domain.label} audit</p>
       <h1 className="display mt-3 text-[2.25rem] leading-[1.1] text-ink sm:text-[2.75rem]">
         {programme.title}
       </h1>
@@ -69,20 +71,21 @@ export function ProgrammeView({ programme }: { programme: AuditProgramme }) {
 
       <AgentTimeline runs={programme.runs} awaitingApproval={planned} />
 
-      <Intake programme={programme} />
-      <RiskFactors programme={programme} />
-      <ThemeCoverage covered={coveredThemes(programme)} />
-      <Obligations programme={programme} />
+      <Intake programme={programme} domain={domain} />
+      <RiskFactors programme={programme} domain={domain} />
+      <ThemeCoverage domain={domain} covered={coveredThemes(programme)} />
+      <Obligations programme={programme} domain={domain} />
 
       {planned ? (
         <ScopeApproval
           programmeId={programme.id}
+          domainId={programme.domain}
           areas={programme.scopeAreas}
           riskFactors={programme.riskFactors}
           obligations={programme.obligations}
         />
       ) : (
-        <Testing programme={programme} />
+        <Testing programme={programme} domain={domain} />
       )}
 
       <footer className="mt-16 border-t border-line pt-6">
@@ -105,31 +108,43 @@ export function ProgrammeView({ programme }: { programme: AuditProgramme }) {
  * One card per dimension in the same colours as the intake form, so the
  * assessment reads back the way it was entered.
  */
-function Intake({ programme }: { programme: AuditProgramme }) {
+function Intake({ programme, domain }: { programme: AuditProgramme; domain: AuditDomain }) {
   return (
     <section className="mt-12">
       <div className="border-t border-line-strong pt-5">
         <h2 className="display text-[1.5rem] leading-snug text-ink">The risk assessment</h2>
         <p className="mt-2 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          The four dimensions MAS requires a licence holder to assess, plus where this team already
-          suspects its controls are thin.
+          {domain.frameworkNote}
         </p>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        {INTAKE_QUESTIONS.map((question) => {
-          const labels = labelsFor(question.id, programme.intake[question.id]);
+        {domain.dimensions.map((dimension) => {
+          const labels = labelsFor(
+            domain,
+            dimension.id,
+            selectionsFor(programme.intake, dimension.id),
+          );
           if (labels.length === 0) return null;
 
           return (
-            <DimensionCard key={question.id} dimension={question.id} className="!p-4 !pl-5">
+            <DimensionCard
+              key={dimension.id}
+              domain={domain}
+              dimension={dimension.id}
+              className="!p-4 !pl-5"
+            >
               <h3 className="meta flex items-center gap-1.5 uppercase tracking-[0.1em] text-ink">
                 <span
                   aria-hidden="true"
                   className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: seriesColor(question.colorSlot) }}
+                  style={{
+                    backgroundColor: dimension.colorSlot
+                      ? seriesColor(dimension.colorSlot)
+                      : "var(--line-strong)",
+                  }}
                 />
-                {question.label}
+                {dimension.label}
               </h3>
               <ul className="mt-2 space-y-1">
                 {labels.map((label) => (
@@ -154,28 +169,27 @@ function Intake({ programme }: { programme: AuditProgramme }) {
 }
 
 /** Risk Agent output. `drivenBy` is the whole point: every factor names its cause. */
-function RiskFactors({ programme }: { programme: AuditProgramme }) {
+function RiskFactors({ programme, domain }: { programme: AuditProgramme; domain: AuditDomain }) {
   return (
     <section className="mt-12">
       <div className="border-t border-line-strong pt-5">
         <h2 className="display text-[1.5rem] leading-snug text-ink">Assessed risk</h2>
         <p className="mt-2 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          What this combination of customers, products, channels and jurisdictions exposes the firm
-          to. Each factor names the answers that produced it, and carries the colour of the
-          dimension it arises from.
+          What this profile exposes the firm to. Each factor names the answers that produced it,
+          and carries the colour of the dimension it arises from.
         </p>
       </div>
 
       <ul className="mt-5 space-y-3">
         {programme.riskFactors.map((factor) => (
           <li key={factor.id}>
-            <DimensionCard dimension={factor.dimension}>
+            <DimensionCard domain={domain} dimension={factor.dimension}>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <p className="meta flex items-center gap-2 uppercase tracking-[0.12em]">
                   <RiskDot rating={factor.severity} />
                   <span className="text-ink-muted">{RISK_LABELS[factor.severity]}</span>
                 </p>
-                <DimensionTag dimension={factor.dimension} />
+                <DimensionTag domain={domain} dimension={factor.dimension} />
               </div>
 
               <h3 className="mt-1.5 text-[1.0625rem] font-semibold leading-snug text-ink">
@@ -206,7 +220,7 @@ function RiskFactors({ programme }: { programme: AuditProgramme }) {
 }
 
 /** MAS Agent output. Every row links to the page it was read from. */
-function Obligations({ programme }: { programme: AuditProgramme }) {
+function Obligations({ programme, domain }: { programme: AuditProgramme; domain: AuditDomain }) {
   return (
     <section className="mt-12">
       <div className="border-t border-line-strong pt-5">
@@ -219,7 +233,7 @@ function Obligations({ programme }: { programme: AuditProgramme }) {
 
       <ol className="mt-5 space-y-3">
         {programme.obligations.map((obligation) => {
-          const theme = obligation.theme ? getObligationTheme(obligation.theme) : null;
+          const theme = obligation.theme ? getTheme(domain, obligation.theme) : null;
 
           return (
             <li
@@ -259,7 +273,7 @@ function Obligations({ programme }: { programme: AuditProgramme }) {
 }
 
 /** The finished programme. Areas the auditor declined are listed, without steps, as part of the record. */
-function Testing({ programme }: { programme: AuditProgramme }) {
+function Testing({ programme, domain }: { programme: AuditProgramme; domain: AuditDomain }) {
   const approved = programme.scopeAreas.filter((area) => area.approved);
   const declined = programme.scopeAreas.filter((area) => !area.approved);
 
@@ -277,18 +291,18 @@ function Testing({ programme }: { programme: AuditProgramme }) {
 
       <div className="mt-8 space-y-10">
         {approved.map((area, index) => {
-          const dimension = dominantDimension(area, programme.riskFactors);
+          const dimension = dominantDimension(programme, area);
 
           return (
             <article key={area.id} aria-labelledby={`area-${area.id}`}>
-              <DimensionCard dimension={dimension}>
+              <DimensionCard domain={domain} dimension={dimension}>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <p className="meta flex items-center gap-2 uppercase tracking-[0.12em]">
                     <span className="text-ink-faint">{String(index + 1).padStart(2, "0")}</span>
                     <RiskDot rating={area.riskRating} />
                     <span className="text-ink-muted">{RISK_LABELS[area.riskRating]} priority</span>
                   </p>
-                  <DimensionTag dimension={dimension} />
+                  <DimensionTag domain={domain} dimension={dimension} />
                 </div>
 
                 <h3

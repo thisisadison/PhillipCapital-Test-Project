@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { DIMENSION_IDS, riskIntakeSchema, type DimensionId } from "./riskIntake";
-import { OBLIGATION_THEME_IDS } from "./masFramework";
+import { riskIntakeSchema } from "./riskIntake";
+import { auditDomainIdSchema, getAuditDomain, type AuditDomainId } from "./auditDomain";
 
 /**
  * An audit programme, as a staged document rather than a single generated blob.
@@ -37,8 +37,12 @@ export const riskFactorSchema = z.object({
   id: z.string().min(1),
   factor: z.string().min(1),
   severity: z.enum(RISK_RATINGS),
-  /** Which of MAS's risk dimensions this sits under. Carries the card's colour. */
-  dimension: z.enum(DIMENSION_IDS),
+  /**
+   * Which of the domain's risk dimensions this sits under. Carries the card's
+   * colour. A plain string rather than an enum because the valid set depends on
+   * the audit domain; it is resolved against that domain before being stored.
+   */
+  dimension: z.string().min(1),
   /** Which intake answers drove this, in the auditor's own vocabulary. */
   drivenBy: z.array(z.string().min(1)).max(6),
   rationale: z.string().min(1),
@@ -56,7 +60,7 @@ export const obligationSchema = z.object({
    * resolved — the obligation is still kept, because the citation is what
    * matters and the theme is navigation.
    */
-  theme: z.enum(OBLIGATION_THEME_IDS).nullable(),
+  theme: z.string().min(1).nullable(),
   sourceName: z.string().min(1),
   sourceUrl: z.url(),
 });
@@ -98,7 +102,7 @@ export type ScopeArea = z.infer<typeof scopeAreaSchema>;
 
 /** One agent's execution, recorded so the pipeline can be read back afterwards. */
 export const agentRunSchema = z.object({
-  agent: z.enum(["risk", "mas", "scope", "evidence"]),
+  agent: z.enum(["risk", "obligations", "scope", "evidence"]),
   startedAt: z.iso.datetime({ offset: true }),
   finishedAt: z.iso.datetime({ offset: true }),
   model: z.string(),
@@ -114,6 +118,8 @@ export type AgentRun = z.infer<typeof agentRunSchema>;
 
 export const auditProgrammeSchema = z.object({
   id: z.string().min(1),
+  /** Which kind of audit this is. Decides the dimensions, themes and sources. */
+  domain: auditDomainIdSchema,
   title: z.string().min(1),
   status: z.enum(PROGRAMME_STATUSES),
   createdAt: z.iso.datetime({ offset: true }),
@@ -135,6 +141,7 @@ export type AuditProgramme = z.infer<typeof auditProgrammeSchema>;
 
 export interface ProgrammeSummary {
   id: string;
+  domain: AuditDomainId;
   title: string;
   status: ProgrammeStatus;
   createdAt: string;
@@ -156,11 +163,11 @@ export function totalSteps(programme: AuditProgramme): number {
  * so the colour is stable across renders rather than dependent on map order.
  */
 export function dominantDimension(
+  programme: Pick<AuditProgramme, "domain" | "riskFactors">,
   area: ScopeArea,
-  riskFactors: RiskFactor[],
-): DimensionId | null {
-  const byId = new Map(riskFactors.map((factor) => [factor.id, factor]));
-  const counts = new Map<DimensionId, number>();
+): string | null {
+  const byId = new Map(programme.riskFactors.map((factor) => [factor.id, factor]));
+  const counts = new Map<string, number>();
 
   for (const id of area.addressesRiskFactors) {
     const factor = byId.get(id);
@@ -168,12 +175,14 @@ export function dominantDimension(
     counts.set(factor.dimension, (counts.get(factor.dimension) ?? 0) + 1);
   }
 
-  let best: DimensionId | null = null;
+  // Iterate the domain's declared order rather than the map's, so a tie breaks
+  // the same way on every render instead of following insertion order.
+  let best: string | null = null;
   let bestCount = 0;
-  for (const dimension of DIMENSION_IDS) {
-    const count = counts.get(dimension) ?? 0;
+  for (const dimension of getAuditDomain(programme.domain).dimensions) {
+    const count = counts.get(dimension.id) ?? 0;
     if (count > bestCount) {
-      best = dimension;
+      best = dimension.id;
       bestCount = count;
     }
   }
