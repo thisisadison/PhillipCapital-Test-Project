@@ -109,23 +109,38 @@ export default function MethodPage() {
         <Section title="The audit programme designer">
           <p>
             A separate pipeline, reached from the Programme tab. It answers a different question: not
-            what changed this week, but what an AML/CFT audit of this firm should actually cover.
+            what changed this week, but what an audit of this firm should actually cover.
           </p>
           <p>
-            The intake is not a questionnaire of our own devising. MAS requires a capital markets
-            services licence holder to identify and assess its ML/TF risk having regard to its
-            customers, the products and services it offers, its delivery channels and the countries
-            it deals with — so those are the four questions, and answering them <em>is</em> the risk
-            assessment. A fifth, optional, asks where the team already suspects its controls are
-            thin, which is what makes the output an internal audit programme rather than a
-            compliance walkthrough. Each dimension owns a colour, and that colour follows it onto
-            the risk factors it produces and the scope areas that answer them.
+            The first question is what you are auditing. Internal Audit covers the whole firm, so
+            the tool carries four audit types — AML and financial crime, compliance and conduct,
+            client assets and money, and technology — and everything after that question comes from
+            the type you pick.
+          </p>
+          <p>
+            The intake is not a questionnaire of our own devising. Each audit type takes its risk
+            dimensions from the framework that actually governs it: MAS requires a capital markets
+            services licence holder to assess its ML/TF risk having regard to its customers,
+            products, delivery channels and countries, so those are the four questions on an AML
+            audit; a technology audit asks about the estate, criticality, data, access and change,
+            following the MAS Technology Risk Management Guidelines and the ITGC pillars external
+            audit already tests. Answering them <em>is</em> the risk assessment. A last dimension,
+            optional and ours rather than the framework&apos;s, asks where the team already suspects
+            its controls are thin — which is what makes the output an internal audit programme
+            rather than a compliance walkthrough. Each dimension owns a colour, and that colour
+            follows it onto the risk factors it produces and the scope areas that answer them.
+          </p>
+          <p>
+            Adding an audit type is a configuration file: its dimensions, its obligation themes, the
+            sources it may cite and the four agent briefs. The pipeline, the approval gate and the
+            traceability constraints are shared and unchanged. Operations and settlement, finance and
+            regulatory reporting, and credit and margin risk are the obvious next ones.
           </p>
           <p>
             Four agents run, with a human decision in the middle. A <strong>Risk Agent</strong> reads
             the intake selections and assesses what this firm is exposed to; it has no tools, because
             its job is judgement about the firm rather than research. In parallel, a{" "}
-            <strong>MAS Agent</strong> searches the instruments themselves — the only agent with
+            <strong>Obligations Agent</strong> searches the instruments themselves — the only agent with
             network access — and extracts obligations, each tied to a page it actually retrieved. A{" "}
             <strong>Scope Agent</strong> then merges the two into proposed control areas, and an area
             it cannot tie to both an assessed risk and a citable obligation is dropped rather than

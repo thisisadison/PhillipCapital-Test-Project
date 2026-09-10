@@ -22,6 +22,24 @@ The four risk dimensions are the ones MAS requires a capital markets services li
 Read `aml/risk-dimensions.md`, `aml/obligation-themes.md` and
 `aml/source-policy.md` before starting.
 
+## Compliance & Conduct
+
+Fair dealing, suitability, best execution, market conduct and the licensing of representatives.
+
+The dimensions follow where Singapore's conduct obligations actually attach — customer segment, product, distribution model and the people involved — under the Securities and Futures Act, the Financial Advisers Act, the MAS Guidelines on Fair Dealing and the Guidelines on Individual Accountability and Conduct.
+
+Read `conduct/risk-dimensions.md`, `conduct/obligation-themes.md` and
+`conduct/source-policy.md` before starting.
+
+## Client Assets & Money
+
+Segregation, custody, reconciliation and reporting of money and assets that belong to customers.
+
+The dimensions follow the customer money and customer assets provisions of the Securities and Futures Act and its Licensing and Conduct of Business Regulations, and the MAS notices on statements and disclosures that sit alongside them.
+
+Read `client-assets/risk-dimensions.md`, `client-assets/obligation-themes.md` and
+`client-assets/source-policy.md` before starting.
+
 ## Technology / IT
 
 System, data and cyber controls, against the MAS Technology Risk Management Guidelines and ITGC.

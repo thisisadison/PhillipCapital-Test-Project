@@ -50,7 +50,7 @@ export const riskFactorSchema = z.object({
 
 export type RiskFactor = z.infer<typeof riskFactorSchema>;
 
-/** MAS Agent output. Every obligation carries the source it was read from. */
+/** Obligations Agent output. Every obligation carries the source it was read from. */
 export const obligationSchema = z.object({
   id: z.string().min(1),
   reference: z.string().min(1),

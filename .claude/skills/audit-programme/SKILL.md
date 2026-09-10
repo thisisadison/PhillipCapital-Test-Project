@@ -1,6 +1,6 @@
 ---
 name: audit-programme
-description: "Design a risk-based internal audit programme for a Singapore capital markets firm, in reviewable stages with an approval gate. Covers AML/financial crime audits and technology/IT audits, each scoped against its own framework. Use when asked to scope, plan or draft an internal audit; build a testing programme or audit work programme; perform an ML/TF or technology risk assessment for an audit; identify which MAS, FATF, TRM, Cyber Hygiene or ITGC obligations an audit should test against; or turn an approved audit scope into testing steps with evidence requirements. Also use for audit planning memos and scoping papers. Not for executing fieldwork, evaluating evidence already collected, or writing audit findings and reports — those need evidence this skill does not have."
+description: "Design a risk-based internal audit programme for a Singapore capital markets firm, in reviewable stages with an approval gate. Covers AML/financial crime, compliance and conduct, client assets and money, and technology/IT audits, each scoped against its own framework. Use when asked to scope, plan or draft an internal audit; build a testing programme or audit work programme; perform an ML/TF or technology risk assessment for an audit; identify which MAS, FATF, SFA, FAA, TRM, Cyber Hygiene or ITGC obligations an audit should test against; scope customer money segregation, custody and reconciliation testing; scope suitability, fair dealing, best execution or market surveillance testing; or turn an approved audit scope into testing steps with evidence requirements. Also use for audit planning memos and scoping papers. Not for executing fieldwork, evaluating evidence already collected, or writing audit findings and reports — those need evidence this skill does not have."
 ---
 
 # Internal audit programme designer
@@ -15,6 +15,10 @@ Internal Audit covers the whole firm, so the first thing to settle is which
 audit this is. Read `references/audit-types.md` and ask. Everything after
 that — the dimensions, the obligations, the sources, what counts as evidence
 — comes from the type they pick.
+
+Do not treat a near miss as a match. A firm asking about settlement failures
+is not asking for a client assets audit, and scoping it as one produces a
+programme that tests the wrong obligations convincingly.
 
 Work in stages, write each stage to a file, and stop at the approval gate.
 The staging is the point: an audit programme that arrives complete in one

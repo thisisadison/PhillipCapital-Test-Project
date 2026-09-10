@@ -58,13 +58,19 @@ papers stay as a record of what changed.
 
 ## Which audits it covers
 
-AML / financial crime, and technology / IT. Each is scoped against its own
-framework — MAS's four ML/TF risk dimensions for the first, the MAS
-Technology Risk Management Guidelines and the ITGC pillars for the second —
-so the questions, the obligations and the sources all change with the type.
+| Audit | Scoped against |
+|---|---|
+| AML / Financial Crime | MAS's four ML/TF risk dimensions, mirrored in FATF Recommendation 1 |
+| Compliance & Conduct | SFA and FAA conduct obligations, Fair Dealing and Individual Accountability guidelines |
+| Client Assets & Money | The customer money and assets provisions of the SFA and its conduct-of-business regulations |
+| Technology / IT | MAS Technology Risk Management Guidelines, the Cyber Hygiene Notice, and the ITGC pillars |
 
-For an audit type it does not cover, it will still help, but it says so
-rather than implying the same grounding.
+The questions, the obligations and the sources all change with the type, so
+pick the one that matches the audit rather than the nearest fit.
+
+For an audit type it does not cover — operations and settlement, finance and
+regulatory reporting, credit and margin risk, HR, governance — it will still
+help, but it says so rather than implying the same framework grounding.
 
 ## Keeping the references current
 

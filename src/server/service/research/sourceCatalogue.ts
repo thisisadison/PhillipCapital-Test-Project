@@ -211,6 +211,19 @@ export const AML_SOURCE_DOMAINS: string[] = domainsOf(
  * and COBIT. IMDA and PDPC are included because a technology audit that touches
  * customer data touches the PDPA.
  */
+/**
+ * Client asset and conduct audits read the same body of law: the Securities and
+ * Futures Act and its subsidiary regulations, MAS notices and guidelines, and
+ * the exchange rulebook. IOSCO and the overseas conduct regulators are included
+ * because they publish the thematic reviews that show what a supervisor
+ * actually tested, which is often the most useful thing an auditor can read.
+ */
+export const MARKETS_CONDUCT_SOURCE_DOMAINS: string[] = domainsOf(
+  REGULATORS_APAC,
+  REGULATORS_GLOBAL,
+  STANDARD_SETTERS,
+);
+
 export const TECHNOLOGY_SOURCE_DOMAINS: string[] = domainsOf(
   RESILIENCE_BODIES,
   REGULATORS_APAC,

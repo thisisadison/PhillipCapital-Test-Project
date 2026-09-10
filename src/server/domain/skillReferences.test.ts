@@ -86,7 +86,10 @@ describe.each(allAuditDomains().map((domain) => [domain.id, domain] as const))(
   },
 );
 
-describe("the two domains' references are actually different", () => {
+describe("the domains' references are actually different", () => {
+  // Spot checks with a specific failure in mind: a domain quietly inheriting
+  // another's vocabulary, which would make the skill ask an auditor questions
+  // from the wrong audit.
   it("does not ask a technology auditor about customer due diligence", () => {
     const tech = rendered["technology/risk-dimensions.md"] ?? "";
 
@@ -100,5 +103,21 @@ describe("the two domains' references are actually different", () => {
 
     expect(aml).not.toMatch(/patch/i);
     expect(aml).toMatch(/politically exposed/i);
+  });
+
+  it("asks the client asset auditor about custody and reconciliation", () => {
+    const assets = rendered["client-assets/risk-dimensions.md"] ?? "";
+
+    expect(assets).toMatch(/trust/i);
+    expect(assets).toMatch(/reconcil/i);
+    expect(assets).not.toMatch(/suitability/i);
+  });
+
+  it("asks the conduct auditor about suitability and licensing", () => {
+    const conduct = rendered["conduct/risk-dimensions.md"] ?? "";
+
+    expect(conduct).toMatch(/representative/i);
+    expect(conduct).toMatch(/execution/i);
+    expect(conduct).not.toMatch(/reconciliation/i);
   });
 });

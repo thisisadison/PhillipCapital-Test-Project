@@ -25,7 +25,12 @@ import { z } from "zod";
  * whole point of this file existing.
  */
 
-export const AUDIT_DOMAIN_IDS = ["aml", "technology"] as const;
+export const AUDIT_DOMAIN_IDS = [
+  "aml",
+  "conduct",
+  "client-assets",
+  "technology",
+] as const;
 export type AuditDomainId = (typeof AUDIT_DOMAIN_IDS)[number];
 
 export const auditDomainIdSchema = z.enum(AUDIT_DOMAIN_IDS);

@@ -7,7 +7,11 @@
  * import it yet, which is a maddening bug to chase.
  */
 import "./aml";
+import "./conduct";
+import "./clientAssets";
 import "./technology";
 
 export { AML_DOMAIN } from "./aml";
+export { CONDUCT_DOMAIN } from "./conduct";
+export { CLIENT_ASSETS_DOMAIN } from "./clientAssets";
 export { TECHNOLOGY_DOMAIN } from "./technology";

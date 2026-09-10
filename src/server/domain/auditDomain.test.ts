@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   allAuditDomains,
   fallbackDimension,
-  getAuditDomain,
   resolveDimensionId,
   resolveThemeId,
 } from "./auditDomain";
@@ -104,13 +103,44 @@ describe("the registry", () => {
     expect(new Set(domains.map((domain) => domain.id)).size).toBe(domains.length);
   });
 
-  it("gives AML and technology genuinely different dimensions", () => {
+  it("gives every pair of domains genuinely different dimensions", () => {
     // The point of the whole refactor: a technology auditor is not asked about
-    // customer due diligence.
-    const aml = getAuditDomain("aml").dimensions.map((d) => d.id);
-    const tech = getAuditDomain("technology").dimensions.map((d) => d.id);
-    const shared = aml.filter((id) => tech.includes(id));
+    // customer due diligence. `controls` is the one dimension every domain
+    // shares by design, and it is the only one they may share.
+    const domains = allAuditDomains();
 
-    expect(shared).toEqual(["controls"]);
+    for (const a of domains) {
+      for (const b of domains) {
+        if (a.id === b.id) continue;
+        const bIds = b.dimensions.map((dimension) => dimension.id);
+        const shared = a.dimensions
+          .map((dimension) => dimension.id)
+          .filter((id) => bIds.includes(id));
+
+        expect(shared, `${a.id} and ${b.id} overlap`).toEqual(["controls"]);
+      }
+    }
+  });
+
+  it("does not let one domain inherit another's obligation themes wholesale", () => {
+    // Deliberately not "no overlap at all": some obligations genuinely exist
+    // under more than one regime, and where they do it is honest for both
+    // domains to carry them. The failure this guards is a domain copy-pasted
+    // from another and only half-edited, which would have it reporting
+    // coverage against a framework that does not govern it.
+    const domains = allAuditDomains();
+
+    for (const a of domains) {
+      for (const b of domains) {
+        if (a.id === b.id) continue;
+        const bLabels = new Set(b.themes.map((theme) => theme.label));
+        const shared = a.themes.filter((theme) => bLabels.has(theme.label));
+        const smaller = Math.min(a.themes.length, b.themes.length);
+
+        expect(shared.length, `${a.id} and ${b.id} share ${shared.length} themes`).toBeLessThan(
+          smaller / 3,
+        );
+      }
+    }
   });
 });

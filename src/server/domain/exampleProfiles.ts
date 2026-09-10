@@ -19,6 +19,22 @@ export const EXAMPLE_PROFILES: Record<AuditDomainId, Record<string, string[]>> =
     country: ["asean", "greater-china", "offshore-centres"],
     controls: ["monitoring-stale", "rapid-growth"],
   },
+  conduct: {
+    customers: ["retail", "accredited", "vulnerable"],
+    products: ["listed-securities", "leveraged", "specified-investment"],
+    distribution: ["advised", "representatives", "marketing-campaigns"],
+    market: ["order-handling", "prop-trading", "pa-dealing"],
+    people: ["appointed-reps", "commission-driven", "high-headcount"],
+    controls: ["complaints-up", "surveillance-untuned"],
+  },
+  "client-assets": {
+    held: ["customer-money", "customer-securities", "collateral"],
+    custody: ["trust-accounts", "own-nominee", "overseas-sub-custodian", "omnibus"],
+    movement: ["client-withdrawals", "third-party-payments", "manual-payments"],
+    proving: ["daily-computation", "manual-recs", "aged-breaks"],
+    disclosure: ["statements", "consent-to-use", "overseas-consent"],
+    controls: ["rec-backlog", "system-change"],
+  },
   technology: {
     environment: ["core-trading", "customer-apps", "cloud", "vendor-systems"],
     criticality: ["business-critical", "financial-transactions", "customer-data"],

@@ -219,7 +219,7 @@ function RiskFactors({ programme, domain }: { programme: AuditProgramme; domain:
   );
 }
 
-/** MAS Agent output. Every row links to the page it was read from. */
+/** Obligations Agent output. Every row links to the page it was read from. */
 function Obligations({ programme, domain }: { programme: AuditProgramme; domain: AuditDomain }) {
   return (
     <section className="mt-12">
