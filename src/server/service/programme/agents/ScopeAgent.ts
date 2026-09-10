@@ -53,6 +53,8 @@ const SYSTEM_PROMPT = [
   "  deserves at this firm — not a restatement of the highest risk factor it touches.",
   "- Prefer fewer, better-defined areas. Six areas an auditor can resource beats twelve that",
   "  fragment the same testing.",
+  "- Between them, the areas should reach across the risk dimensions the assessment found. An",
+  "  audit that puts every area on customer risk has not scoped, it has specialised.",
   "- The rationale names this firm's circumstances. If it would read identically for any brokerage",
   "  in Singapore, it is not a rationale.",
 ].join("\n");
@@ -173,10 +175,11 @@ function buildPrompt(
 ): string {
   const risks = [...riskHandles].map(
     ([handle, factor]) =>
-      `- ${handle} [${factor.severity}] ${factor.factor}\n  ${factor.rationale}`,
+      `- ${handle} [${factor.severity} · ${factor.dimension}] ${factor.factor}\n  ${factor.rationale}`,
   );
   const obligations = [...obligationHandles].map(
-    ([handle, obligation]) => `- ${handle} ${obligation.reference} — ${obligation.requirement}`,
+    ([handle, obligation]) =>
+      `- ${handle} [${obligation.theme ?? "untagged"}] ${obligation.reference} — ${obligation.requirement}`,
   );
 
   return [

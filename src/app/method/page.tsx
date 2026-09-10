@@ -112,6 +112,16 @@ export default function MethodPage() {
             what changed this week, but what an AML/CFT audit of this firm should actually cover.
           </p>
           <p>
+            The intake is not a questionnaire of our own devising. MAS requires a capital markets
+            services licence holder to identify and assess its ML/TF risk having regard to its
+            customers, the products and services it offers, its delivery channels and the countries
+            it deals with — so those are the four questions, and answering them <em>is</em> the risk
+            assessment. A fifth, optional, asks where the team already suspects its controls are
+            thin, which is what makes the output an internal audit programme rather than a
+            compliance walkthrough. Each dimension owns a colour, and that colour follows it onto
+            the risk factors it produces and the scope areas that answer them.
+          </p>
+          <p>
             Four agents run, with a human decision in the middle. A <strong>Risk Agent</strong> reads
             the intake selections and assesses what this firm is exposed to; it has no tools, because
             its job is judgement about the firm rather than research. In parallel, a{" "}
@@ -132,6 +142,15 @@ export default function MethodPage() {
             dropped. The intake, the risk factors and the obligations sit ahead of the programme on
             the page rather than behind it, because the reasoning is what lets an auditor disagree
             with a conclusion by pointing at the step that produced it.
+          </p>
+          <p>
+            Coverage is reported against a fixed list of the obligation themes an AML/CFT audit is
+            normally expected to reach — due diligence, beneficial ownership, PEPs, sanctions
+            screening, suspicious transaction reporting and the rest. Themes the run did not reach
+            are shown as gaps rather than omitted, because a tool that displayed only its hits would
+            let silence read as &ldquo;nothing there&rdquo;. The themes are named; the paragraph
+            numbers are not, because those are retrieved from the instrument at run time rather than
+            hard-coded into a tool that would then keep quoting a reissued notice.
           </p>
           <p>
             A findings-and-reporting stage is deliberately absent. Findings require evidence from

@@ -4,10 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   RISK_LABELS,
+  dominantDimension,
   type Obligation,
   type RiskFactor,
   type ScopeArea,
 } from "@/server/domain/programme";
+import { getQuestion } from "@/server/domain/riskIntake";
+import { seriesColor } from "@/ui/charts/palette";
+import { DimensionRail, DimensionTag } from "./DimensionMark";
 import { RiskDot } from "./RiskDot";
 
 /**
@@ -93,34 +97,46 @@ export function ScopeApproval({
       <ul className="mt-6 space-y-4">
         {areas.map((area) => {
           const checked = approved.includes(area.id);
+          const dimension = dominantDimension(area, riskFactors);
+          const question = dimension ? getQuestion(dimension) : null;
+
           return (
             <li key={area.id}>
               <label
-                className={`block cursor-pointer rounded-xl border bg-surface p-5 shadow-[var(--shadow-card)] transition-[opacity,border-color] duration-200 sm:p-6 ${
+                className={`relative block cursor-pointer overflow-hidden rounded-xl border bg-surface p-5 pl-6 shadow-[var(--shadow-card)] transition-[opacity,border-color] duration-200 sm:p-6 sm:pl-7 ${
                   checked ? "border-line" : "border-dashed border-line opacity-55"
                 }`}
               >
+                {/* The rail carries the dimension this area mostly answers, so
+                    an auditor can see at a glance whether unticking one leaves
+                    a dimension with no coverage at all. */}
+                <DimensionRail dimension={dimension} />
+
                 <div className="flex items-start gap-3">
                   <input
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggle(area.id)}
                     disabled={busy}
-                    className="mt-1 h-4 w-4 shrink-0 accent-[var(--accent)]"
+                    className="mt-1 h-4 w-4 shrink-0"
+                    style={
+                      question ? { accentColor: seriesColor(question.colorSlot) } : undefined
+                    }
                   />
 
                   <div className="min-w-0 flex-1">
-                    <p className="meta flex flex-wrap items-center gap-2 uppercase tracking-[0.12em]">
-                      <RiskDot rating={area.riskRating} />
-                      <span className="text-ink-muted">
-                        {RISK_LABELS[area.riskRating]} priority
-                      </span>
-                      {checked ? null : (
-                        <span className="normal-case tracking-normal text-ink-faint">
-                          — excluded from drafting
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <p className="meta flex items-center gap-2 uppercase tracking-[0.12em]">
+                        <RiskDot rating={area.riskRating} />
+                        <span className="text-ink-muted">
+                          {RISK_LABELS[area.riskRating]} priority
                         </span>
+                      </p>
+                      <DimensionTag dimension={dimension} />
+                      {checked ? null : (
+                        <span className="meta text-ink-faint">excluded from drafting</span>
                       )}
-                    </p>
+                    </div>
 
                     <h3 className="display mt-1.5 text-[1.25rem] leading-snug text-ink">
                       {area.title}

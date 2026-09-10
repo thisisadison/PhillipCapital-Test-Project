@@ -6,7 +6,13 @@ import {
   type AuditProgramme,
   type ScopeArea,
 } from "@/server/domain/programme";
-import { labelsFor, sanitiseIntake, type RiskIntake } from "@/server/domain/riskIntake";
+import { OBLIGATION_THEMES } from "@/server/domain/masFramework";
+import {
+  countSelections,
+  labelsFor,
+  sanitiseIntake,
+  type RiskIntake,
+} from "@/server/domain/riskIntake";
 import { runRiskAgent } from "./agents/RiskAgent";
 import { runMasAgent } from "./agents/MasAgent";
 import { runScopeAgent } from "./agents/ScopeAgent";
@@ -54,7 +60,10 @@ export async function planProgramme(rawIntake: RiskIntake): Promise<PlanResult> 
       agent: "risk",
       startedAt: riskStarted,
       model: RESEARCH_MODEL,
-      produced: `${risk.factors.length} risk factors from ${countSelections(intake)} intake selections`,
+      produced:
+        `${risk.factors.length} risk factors across ` +
+        `${new Set(risk.factors.map((factor) => factor.dimension)).size} dimensions, ` +
+        `from ${countSelections(intake)} intake selections`,
       usage: risk.usage,
       notes: risk.notes,
     }),
@@ -64,7 +73,10 @@ export async function planProgramme(rawIntake: RiskIntake): Promise<PlanResult> 
       agent: "mas",
       startedAt: masStarted,
       model: RESEARCH_MODEL,
-      produced: `${mas.obligations.length} obligations across ${mas.sources.size} sources`,
+      produced:
+        `${mas.obligations.length} obligations across ` +
+        `${new Set(mas.obligations.flatMap((item) => (item.theme ? [item.theme] : []))).size} ` +
+        `of ${OBLIGATION_THEMES.length} themes, from ${mas.sources.size} sources`,
       usage: mas.usage,
       notes: mas.notes,
     }),
@@ -186,23 +198,19 @@ function recordRun(input: {
   };
 }
 
-function countSelections(intake: RiskIntake): number {
-  return (
-    intake.businessLines.length +
-    intake.clientBase.length +
-    intake.channels.length +
-    intake.riskFlags.length
-  );
-}
-
 /**
- * Named from the intake, so a list of programmes is readable without opening
- * them. Falls back to the generic title only when nothing was selected, which
- * the schema already makes near-impossible.
+ * Named from the products in scope, so a list of programmes is readable without
+ * opening them. Falls back to the generic title only when nothing was selected,
+ * which the schema already makes near-impossible.
  */
 function titleFor(intake: RiskIntake): string {
-  const lines = labelsFor("businessLines", intake.businessLines);
-  const subject = lines.length === 0 ? "" : lines.length <= 2 ? lines.join(" and ") : `${lines[0]} and ${lines.length - 1} other lines`;
+  const products = labelsFor("product", intake.product);
+  const subject =
+    products.length === 0
+      ? ""
+      : products.length <= 2
+        ? products.join(" and ")
+        : `${products[0]} and ${products.length - 1} other lines`;
 
   return clamp(subject ? `AML/CFT audit — ${subject}` : "AML/CFT audit programme", 120);
 }

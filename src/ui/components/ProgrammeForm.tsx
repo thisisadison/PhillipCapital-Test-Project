@@ -2,36 +2,37 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { INTAKE_QUESTIONS, type IntakeQuestion } from "@/server/domain/riskIntake";
+import { INTAKE_QUESTIONS, type DimensionId } from "@/server/domain/riskIntake";
+import { seriesColor } from "@/ui/charts/palette";
 
 /**
  * The risk intake.
  *
- * Checkboxes, not a blank box. A blank box is the interface of a chat: it asks
- * the auditor to already know what matters, and it gives the pipeline nothing
- * it can trace a conclusion back to. A fixed vocabulary means every risk factor
- * the next screen shows can name the selection that produced it.
+ * One card per risk dimension, each carrying the dimension's colour on its
+ * left edge — the same device the digest uses for its sections, and for the
+ * same reason: colour here is a key, not decoration. That hairline follows the
+ * dimension through the whole product, onto the risk factors it produces and
+ * the scope areas that answer them, so a reader can trace customer risk across
+ * three screens by colour alone.
  *
- * The three questions that drive scope are required. The fourth — known
- * concerns — is where an auditor's own knowledge of their firm enters, and the
- * free-text note is for the one thing no option list anticipated.
+ * The four required dimensions are MAS's own; the fifth is ours. See
+ * `riskIntake.ts` for why that split matters.
  */
 
-type Selections = Record<IntakeQuestion["id"], string[]>;
+type Selections = Record<DimensionId, string[]>;
 
-const EMPTY: Selections = { businessLines: [], clientBase: [], channels: [], riskFlags: [] };
+const EMPTY: Selections = { customer: [], product: [], channel: [], country: [], controls: [] };
 
 /** A profile that produces a non-trivial programme, for a first run. */
 const EXAMPLE: Selections = {
-  businessLines: ["retail-brokerage", "institutional-brokerage"],
-  clientBase: ["non-resident", "corporate", "high-risk-jurisdictions"],
-  channels: ["digital", "introducers"],
-  riskFlags: ["monitoring-stale", "rapid-growth"],
+  customer: ["retail-non-resident", "corporate", "nominee-structures"],
+  product: ["cash-equities", "leveraged-fx-cfd", "third-party-transfers"],
+  channel: ["online-platform", "introducers"],
+  country: ["asean", "greater-china", "offshore-centres"],
+  controls: ["monitoring-stale", "rapid-growth"],
 };
 
 type State = { kind: "idle" } | { kind: "running" } | { kind: "error"; message: string };
-
-const REQUIRED: IntakeQuestion["id"][] = ["businessLines", "clientBase", "channels"];
 
 export function ProgrammeForm() {
   const [selections, setSelections] = useState<Selections>(EMPTY);
@@ -40,9 +41,12 @@ export function ProgrammeForm() {
   const router = useRouter();
 
   const busy = state.kind === "running";
-  const complete = REQUIRED.every((id) => selections[id].length > 0);
+  const missing = INTAKE_QUESTIONS.filter(
+    (question) => question.required && selections[question.id].length === 0,
+  );
+  const complete = missing.length === 0;
 
-  function toggle(questionId: IntakeQuestion["id"], optionId: string) {
+  function toggle(questionId: DimensionId, optionId: string) {
     setSelections((current) => {
       const chosen = current[questionId];
       return {
@@ -83,68 +87,111 @@ export function ProgrammeForm() {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="rounded-xl border border-line bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6"
-    >
-      <div className="space-y-7">
-        {INTAKE_QUESTIONS.map((question) => (
-          <fieldset key={question.id} disabled={busy} className="disabled:opacity-60">
-            <legend className="meta uppercase tracking-[0.1em] text-ink">
-              {question.label}
-              {REQUIRED.includes(question.id) ? null : (
-                <span className="ml-2 normal-case tracking-normal text-ink-faint">optional</span>
-              )}
-            </legend>
-            <p className="mt-1.5 text-sm leading-relaxed text-ink-faint">{question.help}</p>
+    <form onSubmit={submit}>
+      <div className="space-y-4">
+        {INTAKE_QUESTIONS.map((question) => {
+          const chosen = selections[question.id];
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              {question.options.map((option) => {
-                const checked = selections[question.id].includes(option.id);
-                return (
-                  <label
-                    key={option.id}
-                    // A chip rather than a stacked checkbox list: four questions
-                    // of six options each is a long form vertically, and the
-                    // whole point is that this is quicker than writing prose.
-                    className={`cursor-pointer rounded-lg border px-3 py-2 text-sm leading-tight transition-colors duration-150 ${
-                      checked
-                        ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] text-ink"
-                        : "border-line bg-surface-sunken text-ink-muted hover:border-line-strong"
-                    }`}
+          return (
+            <fieldset
+              key={question.id}
+              disabled={busy}
+              className="relative overflow-hidden rounded-xl border border-line bg-surface p-5 shadow-[var(--shadow-card)] disabled:opacity-60 sm:p-6 sm:pl-7"
+            >
+              {/* The dimension's own colour: the one place its identity appears
+                  on the card, without adding chrome. */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 w-[3px]"
+                style={{ backgroundColor: seriesColor(question.colorSlot) }}
+              />
+
+              {/* Floated rather than left in its default position: a native
+                  legend renders *on* the fieldset's top border, which cuts a
+                  notch through the card edge and the colour rail. Floating it
+                  full-width puts it back in normal flow, and the card's
+                  `overflow-hidden` already contains the float. */}
+              <legend className="meta float-left flex w-full flex-wrap items-center gap-2 uppercase tracking-[0.1em] text-ink">
+                {question.label}
+                {question.required ? (
+                  <span className="normal-case tracking-normal text-ink-faint">
+                    MAS risk dimension
+                  </span>
+                ) : (
+                  <span className="normal-case tracking-normal text-ink-faint">optional</span>
+                )}
+                {chosen.length > 0 ? (
+                  <span
+                    className="rounded-full px-1.5 py-0.5 normal-case tracking-normal text-canvas"
+                    style={{ backgroundColor: seriesColor(question.colorSlot) }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggle(question.id, option.id)}
-                      className="sr-only"
-                    />
-                    {/* Selection is never colour alone: the tick is the cue,
-                        the tint is reinforcement. */}
-                    <span
-                      aria-hidden="true"
-                      className={`mr-1.5 ${checked ? "text-[var(--accent-ink)]" : "text-ink-faint"}`}
-                    >
-                      {checked ? "✓" : "□"}
-                    </span>
-                    {option.label}
-                    {option.hint ? (
-                      <span className="meta mt-0.5 block text-ink-faint">{option.hint}</span>
-                    ) : null}
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-        ))}
+                    {chosen.length}
+                  </span>
+                ) : null}
+              </legend>
 
-        <div>
+              <p className="mt-1.5 max-w-[var(--measure)] text-sm leading-relaxed text-ink-faint">
+                {question.help}
+              </p>
+
+              <div className="mt-3.5 flex flex-wrap gap-2">
+                {question.options.map((option) => {
+                  const checked = chosen.includes(option.id);
+                  return (
+                    <label
+                      key={option.id}
+                      // A chip rather than a stacked checkbox list: five
+                      // dimensions of seven options each is a very long form
+                      // vertically, and the whole point is that this is quicker
+                      // than writing prose.
+                      className={`cursor-pointer rounded-lg border px-3 py-2 text-sm leading-tight transition-colors duration-150 ${
+                        checked
+                          ? "text-ink"
+                          : "border-line bg-surface-sunken text-ink-muted hover:border-line-strong"
+                      }`}
+                      style={
+                        checked
+                          ? {
+                              borderColor: seriesColor(question.colorSlot),
+                              backgroundColor: `color-mix(in srgb, ${seriesColor(question.colorSlot)} 10%, transparent)`,
+                            }
+                          : undefined
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggle(question.id, option.id)}
+                        className="sr-only"
+                      />
+                      {/* Selection is never colour alone: the tick is the cue,
+                          the tint is reinforcement. */}
+                      <span
+                        aria-hidden="true"
+                        className={`mr-1.5 ${checked ? "" : "text-ink-faint"}`}
+                        style={checked ? { color: seriesColor(question.colorSlot) } : undefined}
+                      >
+                        {checked ? "✓" : "□"}
+                      </span>
+                      {option.label}
+                      {option.hint ? (
+                        <span className="meta mt-0.5 block text-ink-faint">{option.hint}</span>
+                      ) : null}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          );
+        })}
+
+        <div className="rounded-xl border border-line bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6">
           <label htmlFor="intake-note" className="meta uppercase tracking-[0.1em] text-ink">
             Anything else
             <span className="ml-2 normal-case tracking-normal text-ink-faint">optional</span>
           </label>
-          <p className="mt-1.5 text-sm leading-relaxed text-ink-faint">
-            One line, if there is something the options above do not cover. The programme works
+          <p className="mt-1.5 max-w-[var(--measure)] text-sm leading-relaxed text-ink-faint">
+            One line, if there is something the dimensions above do not cover. The programme works
             without it.
           </p>
           <textarea
@@ -160,7 +207,7 @@ export function ProgrammeForm() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-5">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
         <button
           type="submit"
           disabled={busy || !complete}
@@ -188,7 +235,7 @@ export function ProgrammeForm() {
         ) : null}
         {state.kind === "idle" && !complete ? (
           <span className="text-ink-faint">
-            Select at least one option under business lines, client base and channels.
+            Still to answer: {missing.map((question) => question.label).join(", ")}.
           </span>
         ) : null}
       </p>

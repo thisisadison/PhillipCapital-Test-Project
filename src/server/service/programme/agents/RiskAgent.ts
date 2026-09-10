@@ -4,7 +4,12 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { RESEARCH_MODEL } from "@/server/service/AnthropicClient";
 import { usageFrom, type UsageTotals } from "@/server/service/UsageTracking";
 import type { RiskFactor } from "@/server/domain/programme";
-import { describeIntake, type RiskIntake } from "@/server/domain/riskIntake";
+import {
+  DIMENSION_IDS,
+  describeIntake,
+  resolveDimensionId,
+  type RiskIntake,
+} from "@/server/domain/riskIntake";
 import { betaFieldsFor, clamp, collapse, effortFor, hashId, normaliseRisk } from "./shared";
 
 /**
@@ -25,6 +30,8 @@ const draftSchema = z.object({
     z.object({
       factor: z.string(),
       severity: z.string(),
+      /** One of the five dimension ids. Resolved leniently — enums are not enforced. */
+      dimension: z.string(),
       drivenBy: z.array(z.string()),
       rationale: z.string(),
     }),
@@ -32,18 +39,24 @@ const draftSchema = z.object({
 });
 
 const SYSTEM_PROMPT = [
-  "You are a financial crime risk specialist assessing a Singapore capital markets firm on behalf",
-  "of its Internal Audit function.",
+  "You are a financial crime risk specialist performing the ML/TF risk assessment for a Singapore",
+  "capital markets services licence holder, on behalf of its Internal Audit function.",
   "",
-  "You are given what the firm does, who it onboards, how, and what its auditors already consider",
-  "a concern. You return the money-laundering and terrorism-financing risk factors that this",
-  "particular combination creates.",
+  "You are given the firm's profile across the dimensions MAS requires a licence holder to assess:",
+  "its customers, the products and services it offers, its delivery channels, and the countries it",
+  "deals with — plus the control weaknesses its own auditors already suspect.",
+  "",
+  "You return the money-laundering and terrorism-financing risk factors that this particular",
+  "combination creates, each tagged to the dimension it arises from.",
   "",
   "What makes a factor worth returning:",
   "- It follows from the selections given, not from generic AML commentary. If nothing in the",
   "  intake implicates cash handling, do not return a cash risk.",
   "- It is specific about the mechanism. 'Third-party introducers perform CDD the firm must still",
   "  stand behind' is a factor; 'onboarding risk' is a category.",
+  "- The strongest factors come from a *combination* of dimensions, because that is where real",
+  "  exposure lives: non-resident clients onboarded digitally through an introducer is a sharper",
+  "  factor than any of those three alone. Prefer those.",
   "- Severity reflects this firm's exposure, not the topic's importance in the abstract.",
   "",
   "Be honest when a selection is low risk. A firm that onboards Singapore residents in person",
@@ -73,15 +86,19 @@ export async function runRiskAgent(
         content: [
           "Assess the AML/CFT risk factors for this firm.",
           "",
+          "## The firm's risk profile",
           describeIntake(intake),
           "",
+          "## Output",
           "For each factor return:",
           "- `factor` — the exposure, stated in one line",
           "- `severity` — `high`, `medium` or `low` for this firm specifically",
+          `- \`dimension\` — the dimension it primarily arises from: ${DIMENSION_IDS.map((id) => `\`${id}\``).join(", ")}`,
           "- `drivenBy` — the intake selections that produce it, quoted as they appear above",
           "- `rationale` — two sentences on the mechanism: how the exposure actually arises",
           "",
-          "Return four to eight factors. Fewer is correct when the profile is genuinely simple.",
+          "Return five to eight factors, and cover more than one dimension. Fewer is correct when",
+          "the profile is genuinely simple.",
         ].join("\n"),
       },
     ],
@@ -106,10 +123,16 @@ export async function runRiskAgent(
     if (seen.has(factor.toLowerCase())) continue;
     seen.add(factor.toLowerCase());
 
+    // An unresolvable dimension falls back to `controls`: it is the one
+    // dimension that is ours rather than MAS's, so a mistagged factor lands
+    // somewhere honest instead of overstating coverage of a MAS dimension.
+    const dimension = resolveDimensionId(raw.dimension) ?? "controls";
+
     factors.push({
       id: hashId(factor),
       factor: clamp(factor, 140),
       severity: normaliseRisk(raw.severity),
+      dimension,
       drivenBy: raw.drivenBy
         .map((value: string) => clamp(collapse(value), 60))
         .filter(Boolean)

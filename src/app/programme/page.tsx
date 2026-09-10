@@ -23,14 +23,16 @@ export default async function ProgrammeIndexPage() {
           Audit Programme
         </h1>
         <p className="mt-5 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          Four agents, with your approval in the middle. Two run first and in parallel — one
-          assessing what this firm is exposed to, one reading the applicable MAS and FATF
-          requirements. A third merges them into a proposed scope. You approve it, and only then is
-          the detailed testing drafted, and only for what you kept.
+          The four dimensions below are the ones MAS requires a capital markets licence holder to
+          assess its ML/TF risk against — customers, products, channels and countries. Answering
+          them is the risk assessment; the programme is built from it.
         </p>
         <p className="mt-3 max-w-[var(--measure)] text-[0.9375rem] leading-[1.7] text-ink-muted">
-          Every stage is shown with what it produced and what it cost, so the reasoning between your
-          answers and the programme is something you can read and correct.
+          Four agents run, with your approval in the middle. Two go first and in parallel — one
+          assessing what this profile exposes the firm to, one reading the applicable MAS and FATF
+          requirements. A third merges them into a proposed scope. You approve it, and only then is
+          the detailed testing drafted, and only for what you kept. Every stage shows what it
+          produced, what it cost, and what it dropped.
         </p>
 
         <div className="mt-8">

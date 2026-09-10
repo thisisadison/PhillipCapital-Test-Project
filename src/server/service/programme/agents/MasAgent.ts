@@ -10,6 +10,7 @@ import {
 import { SourceIndex } from "@/server/service/synthesis/sourceIndex";
 import type { RetrievedSource } from "@/server/service/research/ResearchService";
 import type { Obligation } from "@/server/domain/programme";
+import { OBLIGATION_THEMES, formatThemes, resolveThemeId } from "@/server/domain/masFramework";
 import { describeIntake, type RiskIntake } from "@/server/domain/riskIntake";
 import { betaFieldsFor, clamp, collapse, effortFor, hashId, tuningFor } from "./shared";
 
@@ -31,6 +32,8 @@ const draftSchema = z.object({
     z.object({
       reference: z.string(),
       requirement: z.string(),
+      /** One of the obligation theme ids. Resolved leniently; null is acceptable. */
+      theme: z.string(),
       /** Catalogue handle. The model never writes a URL. */
       sourceId: z.string(),
     }),
@@ -81,6 +84,12 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
         "or Wolfsberg guidance where it adds something MAS does not cover. Prioritise obligations",
         "the profile above actually implicates, and ignore obligations for business this firm does",
         "not conduct.",
+        "",
+        "## Themes to cover",
+        "Work through these, spending your searches on the ones this firm's profile implicates most.",
+        "You are not required to reach all of them — an honest gap is better than a padded citation.",
+        "",
+        formatThemes(),
         "",
         "For each obligation record the instrument and paragraph, what it requires, and the URL of",
         "the result you took it from. Write prose notes.",
@@ -161,8 +170,12 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
           "",
           sources.format(),
           "",
+          "## Themes",
+          formatThemes(),
+          "",
           "Return `reference` (instrument and paragraph), `requirement` (what it requires, one or",
-          "two sentences), and `sourceId`. Six to twelve obligations.",
+          "two sentences), `theme` (one theme id from the list above), and `sourceId`. Six to",
+          "twelve obligations.",
         ].join("\n"),
       },
     ],
@@ -191,6 +204,7 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
       id: hashId(reference),
       reference: clamp(reference, 160),
       requirement: clamp(requirement, 500),
+      theme: resolveThemeId(raw.theme),
       sourceName: source.title.split(/\s[|–—-]\s/).pop()?.trim() || source.url,
       sourceUrl: source.url,
     });
@@ -198,6 +212,18 @@ export async function runMasAgent(client: Anthropic, intake: RiskIntake): Promis
 
   if (obligations.length === 0) {
     throw new Error("No obligation survived source checking, so there is nothing to test against.");
+  }
+
+  // Coverage is reported, never quietly padded. A theme the search did not
+  // reach is a real gap in the programme and the auditor has to see it.
+  const covered = new Set(obligations.flatMap((item) => (item.theme ? [item.theme] : [])));
+  const missed = OBLIGATION_THEMES.filter((theme) => !covered.has(theme.id));
+  if (missed.length > 0) {
+    notes.push(
+      `No obligation found for ${missed.length} theme${missed.length === 1 ? "" : "s"}: ${missed
+        .map((theme) => theme.label)
+        .join(", ")}.`,
+    );
   }
 
   return { obligations, sources, notes, usage };

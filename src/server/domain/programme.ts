@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { riskIntakeSchema } from "./riskIntake";
+import { DIMENSION_IDS, riskIntakeSchema, type DimensionId } from "./riskIntake";
+import { OBLIGATION_THEME_IDS } from "./masFramework";
 
 /**
  * An audit programme, as a staged document rather than a single generated blob.
@@ -36,6 +37,8 @@ export const riskFactorSchema = z.object({
   id: z.string().min(1),
   factor: z.string().min(1),
   severity: z.enum(RISK_RATINGS),
+  /** Which of MAS's risk dimensions this sits under. Carries the card's colour. */
+  dimension: z.enum(DIMENSION_IDS),
   /** Which intake answers drove this, in the auditor's own vocabulary. */
   drivenBy: z.array(z.string().min(1)).max(6),
   rationale: z.string().min(1),
@@ -48,6 +51,12 @@ export const obligationSchema = z.object({
   id: z.string().min(1),
   reference: z.string().min(1),
   requirement: z.string().min(1),
+  /**
+   * Which obligation theme this falls under. Null when it could not be
+   * resolved — the obligation is still kept, because the citation is what
+   * matters and the theme is navigation.
+   */
+  theme: z.enum(OBLIGATION_THEME_IDS).nullable(),
   sourceName: z.string().min(1),
   sourceUrl: z.url(),
 });
@@ -135,6 +144,47 @@ export interface ProgrammeSummary {
 
 export function totalSteps(programme: AuditProgramme): number {
   return programme.scopeAreas.reduce((total, area) => total + area.steps.length, 0);
+}
+
+/**
+ * The risk dimension a scope area mostly answers, which is what gives its card
+ * a colour.
+ *
+ * Derived rather than persisted: a scope area's dimension is entirely a
+ * function of the risk factors it addresses, and storing a second copy of that
+ * is how the two drift apart. Ties break towards the dimension declared first,
+ * so the colour is stable across renders rather than dependent on map order.
+ */
+export function dominantDimension(
+  area: ScopeArea,
+  riskFactors: RiskFactor[],
+): DimensionId | null {
+  const byId = new Map(riskFactors.map((factor) => [factor.id, factor]));
+  const counts = new Map<DimensionId, number>();
+
+  for (const id of area.addressesRiskFactors) {
+    const factor = byId.get(id);
+    if (!factor) continue;
+    counts.set(factor.dimension, (counts.get(factor.dimension) ?? 0) + 1);
+  }
+
+  let best: DimensionId | null = null;
+  let bestCount = 0;
+  for (const dimension of DIMENSION_IDS) {
+    const count = counts.get(dimension) ?? 0;
+    if (count > bestCount) {
+      best = dimension;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+/** Which obligation themes this programme actually reached. Drives the coverage strip. */
+export function coveredThemes(programme: AuditProgramme): Set<string> {
+  return new Set(
+    programme.obligations.flatMap((obligation) => (obligation.theme ? [obligation.theme] : [])),
+  );
 }
 
 export function totalCostUsd(programme: AuditProgramme): number {
