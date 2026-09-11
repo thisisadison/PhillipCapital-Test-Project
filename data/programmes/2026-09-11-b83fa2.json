@@ -1,0 +1,417 @@
+{
+  "id": "2026-09-11-b83fa2",
+  "domain": "technology",
+  "title": "Technology audit — Core trading and order management systems and 4 more",
+  "status": "complete",
+  "createdAt": "2026-09-11T01:52:22.464Z",
+  "completedAt": "2026-09-11T01:52:22.464Z",
+  "intake": {
+    "domain": "technology",
+    "selections": {
+      "environment": [
+        "core-trading",
+        "customer-apps",
+        "cloud",
+        "vendor-systems",
+        "integrations"
+      ],
+      "criticality": [
+        "business-critical",
+        "financial-transactions",
+        "customer-data",
+        "market-connectivity"
+      ],
+      "data": [
+        "personal-data",
+        "financial-data",
+        "cross-border-data"
+      ],
+      "access": [
+        "privileged",
+        "third-party-access",
+        "remote-access",
+        "shared-accounts"
+      ],
+      "change": [
+        "frequent-releases",
+        "legacy",
+        "migration",
+        "vendor-patching"
+      ],
+      "controls": [
+        "access-reviews-overdue",
+        "patch-backlog",
+        "dr-untested"
+      ]
+    },
+    "note": "Order management platform migrated to cloud in Q2. Vendor now controls patching."
+  },
+  "scopeSummary": "This audit covers privileged access, vulnerability remediation, cloud configuration and recovery testing across the order management platform and its market-connectivity systems, weighted towards the control boundaries that moved during the Q2 cloud migration.",
+  "riskFactors": [
+    {
+      "id": "rf1",
+      "factor": "Vendor-controlled patching leaves the firm unable to meet its own remediation window",
+      "severity": "high",
+      "dimension": "change",
+      "drivenBy": [
+        "Patching controlled by a vendor",
+        "Third-party and vendor-hosted systems",
+        "Patch management backlog"
+      ],
+      "rationale": "Where the vendor schedules patching, the firm's remediation clock runs on someone else's calendar. A critical vulnerability disclosed on a Friday is exposed until the vendor's next window, and the contract may not give the firm any right to accelerate it."
+    },
+    {
+      "id": "rf2",
+      "factor": "Privileged access to the trading platform is shared and held by third parties",
+      "severity": "high",
+      "dimension": "access",
+      "drivenBy": [
+        "Privileged and administrator access",
+        "Third-party or vendor access",
+        "Shared or generic accounts"
+      ],
+      "rationale": "A shared administrator account used by vendor engineers cannot be traced to a named individual, so an unauthorised change cannot be attributed after the fact. Access reviews overdue means nobody has confirmed recently who still holds these credentials."
+    },
+    {
+      "id": "rf3",
+      "factor": "Cloud migration moved the control boundary without moving the obligation",
+      "severity": "high",
+      "dimension": "environment",
+      "drivenBy": [
+        "Cloud infrastructure",
+        "Core trading and order management systems",
+        "Recent migration"
+      ],
+      "rationale": "Under the shared responsibility model the provider secures the platform and the firm secures what it puts on it, but the licence obligations sit entirely with the firm. A migration performed under time pressure typically leaves configuration hardening as an open item."
+    },
+    {
+      "id": "rf4",
+      "factor": "Untested recovery on a system with a regulatory downtime cap",
+      "severity": "high",
+      "dimension": "criticality",
+      "drivenBy": [
+        "Business-critical systems",
+        "Exchange and market connectivity",
+        "Disaster recovery not tested, or tests failed"
+      ],
+      "rationale": "MAS caps unscheduled downtime for a critical system, and a recovery plan that has not been exercised is an assumption rather than a control. Market connectivity failure during a trading session has no acceptable degraded mode."
+    },
+    {
+      "id": "rf5",
+      "factor": "Customer personal data processed outside Singapore without evidenced transfer conditions",
+      "severity": "medium",
+      "dimension": "data",
+      "drivenBy": [
+        "Customer personal data",
+        "Data held or processed overseas",
+        "Cloud infrastructure"
+      ],
+      "rationale": "Transferring personal data overseas requires the firm to satisfy itself the recipient offers comparable protection. A cloud region selected for latency or cost is unlikely to have been assessed against that test."
+    },
+    {
+      "id": "rf6",
+      "factor": "Access recertification has lapsed across the estate",
+      "severity": "medium",
+      "dimension": "controls",
+      "drivenBy": [
+        "User access reviews overdue",
+        "Remote and mobile access"
+      ],
+      "rationale": "Overdue recertification means leavers and movers accumulate entitlements nobody has confirmed they still need. Combined with remote access this widens the window in which a dormant account can be used without being noticed."
+    }
+  ],
+  "obligations": [
+    {
+      "id": "ob1",
+      "reference": "MAS TRM Guidelines — Access Control",
+      "requirement": "Grant access on a need-to-have basis, enforce accountability for privileged accounts, and review user access rights periodically.",
+      "theme": "privileged-access",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    },
+    {
+      "id": "ob2",
+      "reference": "MAS Notice on Cyber Hygiene — Administrative Accounts",
+      "requirement": "Restrict administrative accounts to authorised persons, and ensure they are not used for routine activity.",
+      "theme": "privileged-access",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/notices"
+    },
+    {
+      "id": "ob3",
+      "reference": "MAS Notice on Cyber Hygiene — Security Patches",
+      "requirement": "Apply security patches to address vulnerabilities to every system, within a timeframe commensurate with the risk posed.",
+      "theme": "vulnerability",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/notices"
+    },
+    {
+      "id": "ob4",
+      "reference": "MAS TRM Guidelines — Systems Reliability, Availability and Recoverability",
+      "requirement": "Establish recovery objectives for critical systems and validate them through periodic testing that includes a failover to the recovery site.",
+      "theme": "resilience",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    },
+    {
+      "id": "ob5",
+      "reference": "MAS Outsourcing Guidelines — Monitoring and Control",
+      "requirement": "Maintain oversight of material outsourcing arrangements, including the right to audit the service provider and to be notified of incidents affecting the firm.",
+      "theme": "third-party",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/guidelines-on-outsourcing"
+    },
+    {
+      "id": "ob6",
+      "reference": "MAS TRM Guidelines — Cloud Services",
+      "requirement": "Assess and manage the risks of cloud adoption, including the allocation of responsibilities between the firm and the cloud service provider.",
+      "theme": "third-party",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    },
+    {
+      "id": "ob7",
+      "reference": "PDPA — Protection Obligation",
+      "requirement": "Make reasonable security arrangements to protect personal data in the organisation's possession or control.",
+      "theme": "data-protection",
+      "sourceName": "Personal Data Protection Commission",
+      "sourceUrl": "https://www.pdpc.gov.sg/overview-of-pdpa/the-legislation/personal-data-protection-act"
+    },
+    {
+      "id": "ob8",
+      "reference": "PDPA — Transfer Limitation Obligation",
+      "requirement": "Do not transfer personal data outside Singapore unless the recipient is bound by legally enforceable obligations to provide a comparable standard of protection.",
+      "theme": "data-protection",
+      "sourceName": "Personal Data Protection Commission",
+      "sourceUrl": "https://www.pdpc.gov.sg/overview-of-pdpa/the-legislation/personal-data-protection-act"
+    },
+    {
+      "id": "ob9",
+      "reference": "MAS TRM Guidelines — Change Management",
+      "requirement": "Subject changes to production systems to authorisation, testing and approval commensurate with their risk and impact.",
+      "theme": "change-management",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    }
+  ],
+  "scopeAreas": [
+    {
+      "id": "sa1",
+      "title": "Privileged and vendor access to the order management platform",
+      "riskRating": "high",
+      "rationale": "Shared administrator credentials held by vendor engineers on a business-critical trading system, with recertification overdue, is the combination most likely to produce an unattributable change during this audit period.",
+      "addressesRiskFactors": [
+        "rf1",
+        "rf2",
+        "rf6"
+      ],
+      "testsObligations": [
+        "ob1",
+        "ob2",
+        "ob5"
+      ],
+      "approved": true,
+      "steps": [
+        {
+          "id": "s1",
+          "procedure": "Export the full list of accounts with administrator or equivalent privilege on the order management platform directly from the identity system, and trace each to a named individual and an approved access request.",
+          "evidenceRequired": "Privileged account inventory exported by the auditor, and the approval record for each account.",
+          "sampling": "Full population of privileged accounts — the population is small enough to test entirely."
+        },
+        {
+          "id": "s2",
+          "procedure": "For each vendor engineer holding access, inspect the contractual basis for that access and confirm the account is individually named rather than shared.",
+          "evidenceRequired": "The outsourcing agreement's access clauses and the account listing filtered to vendor personnel.",
+          "sampling": "Full population of vendor-held accounts."
+        },
+        {
+          "id": "s3",
+          "procedure": "Reperform the most recent access recertification for the platform and compare the reviewer's conclusions against the entitlements actually in force on the review date.",
+          "evidenceRequired": "The completed recertification pack with reviewer sign-off, and a point-in-time entitlement extract for that date.",
+          "sampling": "The most recent completed cycle; if none falls in the period, record that as the finding."
+        },
+        {
+          "id": "s4",
+          "procedure": "Trace privileged session activity for a sample of days to the individual who performed it, using system-generated session logs rather than a summary report.",
+          "evidenceRequired": "Raw privileged session logs for the sampled dates.",
+          "sampling": "10 trading days selected across the period, including at least two days following a production change."
+        }
+      ]
+    },
+    {
+      "id": "sa2",
+      "title": "Vulnerability remediation where the vendor controls the patch window",
+      "riskRating": "high",
+      "rationale": "The firm carries the remediation obligation but not the schedule. This area tests whether the contract and the operating practice actually let the firm meet its own timeframe.",
+      "addressesRiskFactors": [
+        "rf1"
+      ],
+      "testsObligations": [
+        "ob3",
+        "ob5"
+      ],
+      "approved": true,
+      "steps": [
+        {
+          "id": "s5",
+          "procedure": "Inspect the outsourcing agreement for the firm's right to require patching within a defined timeframe, and for its right to be notified of vulnerabilities affecting the hosted platform.",
+          "evidenceRequired": "The executed agreement and any service schedule covering security maintenance.",
+          "sampling": "Full population — one agreement."
+        },
+        {
+          "id": "s6",
+          "procedure": "Trace each critical vulnerability disclosed during the period against the platform to the date it was remediated, and recalculate the elapsed time against the firm's own stated remediation window.",
+          "evidenceRequired": "Vulnerability scan output or vendor advisories for the period, and the patch deployment records.",
+          "sampling": "Full population of critical-rated vulnerabilities; a random sample of 15 high-rated ones."
+        },
+        {
+          "id": "s7",
+          "procedure": "Inspect the escalation record for any vulnerability that exceeded the window, and confirm it reached the technology risk committee rather than stopping at the platform team.",
+          "evidenceRequired": "Committee minutes and the exception register.",
+          "sampling": "All instances identified in the step above."
+        }
+      ]
+    },
+    {
+      "id": "sa3",
+      "title": "Cloud configuration and the shared responsibility boundary post-migration",
+      "riskRating": "high",
+      "rationale": "The platform moved in Q2 under a delivery deadline. This area tests whether the firm's half of the responsibility model was hardened and documented, rather than assumed to be the provider's.",
+      "addressesRiskFactors": [
+        "rf3",
+        "rf5"
+      ],
+      "testsObligations": [
+        "ob6",
+        "ob7"
+      ],
+      "approved": true,
+      "steps": [
+        {
+          "id": "s8",
+          "procedure": "Obtain the cloud provider's shared responsibility matrix for the services in use and trace each firm-side control to a named owner and a documented configuration standard.",
+          "evidenceRequired": "The provider's responsibility matrix and the firm's cloud security standard.",
+          "sampling": "Full population of services supporting the order management platform."
+        },
+        {
+          "id": "s9",
+          "procedure": "Export the current configuration of the production environment and compare it against the firm's hardening baseline, recording every deviation.",
+          "evidenceRequired": "Configuration export pulled by the auditor from the provider's console or API, and the approved baseline.",
+          "sampling": "Full-population configuration comparison — automated tooling makes a sample unnecessary."
+        },
+        {
+          "id": "s10",
+          "procedure": "Inspect the migration's go-live approval and confirm that open security items were either closed or formally accepted by a named risk owner before cutover.",
+          "evidenceRequired": "The go-live decision record and the open-items register as at the cutover date.",
+          "sampling": "Full population — one migration."
+        }
+      ]
+    },
+    {
+      "id": "sa4",
+      "title": "Recovery testing for market-connectivity systems",
+      "riskRating": "high",
+      "rationale": "A regulatory downtime cap applies and the recovery plan has not been exercised since the migration changed the topology it was written against.",
+      "addressesRiskFactors": [
+        "rf4"
+      ],
+      "testsObligations": [
+        "ob4"
+      ],
+      "approved": true,
+      "steps": [
+        {
+          "id": "s11",
+          "procedure": "Inspect the recovery objectives documented for each market-connectivity system and confirm they were reapproved after the migration changed the topology.",
+          "evidenceRequired": "The business impact analysis and the recovery plan with its approval date.",
+          "sampling": "Full population of market-connectivity systems."
+        },
+        {
+          "id": "s12",
+          "procedure": "Observe or reperform a failover test, or where none has been run in the period, obtain written confirmation of that fact from the Head of Infrastructure.",
+          "evidenceRequired": "The test report with its exceptions, or the written confirmation that no test was performed.",
+          "sampling": "The most recent test; absence of one is itself the result."
+        },
+        {
+          "id": "s13",
+          "procedure": "Recalculate actual unscheduled downtime for the period from incident records and compare it against the regulatory cap.",
+          "evidenceRequired": "The incident register and system availability reports for the period.",
+          "sampling": "Full population of unscheduled outages."
+        }
+      ]
+    },
+    {
+      "id": "sa5",
+      "title": "Cross-border processing of customer personal data",
+      "riskRating": "medium",
+      "rationale": "Cloud regions were selected during migration. This area tests whether transfer conditions were assessed before customer data began being processed outside Singapore.",
+      "addressesRiskFactors": [
+        "rf5"
+      ],
+      "testsObligations": [
+        "ob7",
+        "ob8"
+      ],
+      "approved": false,
+      "steps": []
+    },
+    {
+      "id": "sa6",
+      "title": "Change authorisation for frequent production releases",
+      "riskRating": "medium",
+      "rationale": "A continuous deployment cadence on a system executing financial transactions puts weight on automated gates rather than on a change advisory board.",
+      "addressesRiskFactors": [
+        "rf1"
+      ],
+      "testsObligations": [
+        "ob9"
+      ],
+      "approved": false,
+      "steps": []
+    }
+  ],
+  "runs": [
+    {
+      "agent": "risk",
+      "startedAt": "2026-09-11T01:47:54.465Z",
+      "finishedAt": "2026-09-11T01:48:40.465Z",
+      "model": "claude-haiku-4-5",
+      "produced": "6 risk factors across 5 dimensions, from 22 intake selections",
+      "costUsd": 0.0164,
+      "notes": [
+        "Dropped \"End-user computing exposure\" — no mechanism explained."
+      ]
+    },
+    {
+      "agent": "obligations",
+      "startedAt": "2026-09-11T01:47:54.465Z",
+      "finishedAt": "2026-09-11T01:50:38.465Z",
+      "model": "claude-haiku-4-5",
+      "produced": "9 obligations across 6 of 14 themes, from 9 sources",
+      "costUsd": 0.0612,
+      "notes": [
+        "No obligation found for 8 themes: Technology risk governance, Logical access management, Authentication controls, Project and system development, Computer operations, Cyber security operations, Network and perimeter security, Incident management and reporting."
+      ]
+    },
+    {
+      "agent": "scope",
+      "startedAt": "2026-09-11T01:50:38.465Z",
+      "finishedAt": "2026-09-11T01:51:51.465Z",
+      "model": "claude-haiku-4-5",
+      "produced": "6 proposed control areas",
+      "costUsd": 0.0287,
+      "notes": [
+        "Dropped \"IT governance and board reporting\" — it cited no obligation to test against."
+      ]
+    },
+    {
+      "agent": "evidence",
+      "startedAt": "2026-09-11T01:51:51.465Z",
+      "finishedAt": "2026-09-11T01:52:22.464Z",
+      "model": "claude-haiku-4-5",
+      "produced": "13 testing steps across 4 approved areas",
+      "costUsd": 0.0431,
+      "notes": []
+    }
+  ]
+}

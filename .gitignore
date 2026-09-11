@@ -15,6 +15,12 @@ next-env.d.ts
 !/data/digests/.gitkeep
 /data/programmes/*
 !/data/programmes/.gitkeep
+# Two illustrative programmes are committed so the app has something to show
+# without an API key — a reviewer can open the deployed site and click through
+# the whole flow. They are written by hand, not produced by a model run; see
+# docs/screenshots/README.md.
+!/data/programmes/2026-09-11-7c4e19.json
+!/data/programmes/2026-09-11-b83fa2.json
 
 .DS_Store
 *.log

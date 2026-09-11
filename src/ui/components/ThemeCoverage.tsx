@@ -33,9 +33,12 @@ export function ThemeCoverage({
       </div>
 
       <p className="mt-2 max-w-[var(--measure)] text-[0.9375rem] leading-[1.65] text-ink-muted">
-        The themes a {domain.label.toLowerCase()} audit is normally expected to cover, and whether
-        this run found a citable obligation for each. A theme not reached is a gap to close by hand — not a theme
-        that does not apply.
+        {/* Not the domain label interpolated into the sentence: "a Technology /
+            IT audit" reads badly lowercased and the slash reads worse. The
+            heading above already says which audit this is. */}
+        The themes an audit of this kind is normally expected to cover, and whether this run found a
+        citable obligation for each. A theme not reached is a gap to close by hand — not a theme that
+        does not apply.
       </p>
 
       <ul className="mt-4 flex flex-wrap gap-1.5">

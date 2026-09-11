@@ -11,6 +11,19 @@ Everything the tool touches is public market and industry information. There is 
 
 ---
 
+## Two tools in one app
+
+| | |
+|---|---|
+| **This week** | The weekly research digest — what changed, and what audit should do about it. |
+| **Programme** | The audit programme designer: four agents and an approval gate, covering five kinds of audit. |
+
+**[→ Walk through a technology audit in screenshots](docs/screenshots/)** — the
+full flow from choosing an audit type to the finished testing programme, with no
+API key needed.
+
+---
+
 ## How it works
 
 ```

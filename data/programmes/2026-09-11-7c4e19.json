@@ -1,0 +1,325 @@
+{
+  "id": "2026-09-11-7c4e19",
+  "domain": "technology",
+  "title": "Technology audit — Core trading and order management systems and 4 more",
+  "status": "planned",
+  "createdAt": "2026-09-11T01:52:22.464Z",
+  "intake": {
+    "domain": "technology",
+    "selections": {
+      "environment": [
+        "core-trading",
+        "customer-apps",
+        "cloud",
+        "vendor-systems",
+        "integrations"
+      ],
+      "criticality": [
+        "business-critical",
+        "financial-transactions",
+        "customer-data",
+        "market-connectivity"
+      ],
+      "data": [
+        "personal-data",
+        "financial-data",
+        "cross-border-data"
+      ],
+      "access": [
+        "privileged",
+        "third-party-access",
+        "remote-access",
+        "shared-accounts"
+      ],
+      "change": [
+        "frequent-releases",
+        "legacy",
+        "migration",
+        "vendor-patching"
+      ],
+      "controls": [
+        "access-reviews-overdue",
+        "patch-backlog",
+        "dr-untested"
+      ]
+    },
+    "note": "Order management platform migrated to cloud in Q2. Vendor now controls patching."
+  },
+  "scopeSummary": "This audit covers privileged access, vulnerability remediation, cloud configuration and recovery testing across the order management platform and its market-connectivity systems, weighted towards the control boundaries that moved during the Q2 cloud migration.",
+  "riskFactors": [
+    {
+      "id": "rf1",
+      "factor": "Vendor-controlled patching leaves the firm unable to meet its own remediation window",
+      "severity": "high",
+      "dimension": "change",
+      "drivenBy": [
+        "Patching controlled by a vendor",
+        "Third-party and vendor-hosted systems",
+        "Patch management backlog"
+      ],
+      "rationale": "Where the vendor schedules patching, the firm's remediation clock runs on someone else's calendar. A critical vulnerability disclosed on a Friday is exposed until the vendor's next window, and the contract may not give the firm any right to accelerate it."
+    },
+    {
+      "id": "rf2",
+      "factor": "Privileged access to the trading platform is shared and held by third parties",
+      "severity": "high",
+      "dimension": "access",
+      "drivenBy": [
+        "Privileged and administrator access",
+        "Third-party or vendor access",
+        "Shared or generic accounts"
+      ],
+      "rationale": "A shared administrator account used by vendor engineers cannot be traced to a named individual, so an unauthorised change cannot be attributed after the fact. Access reviews overdue means nobody has confirmed recently who still holds these credentials."
+    },
+    {
+      "id": "rf3",
+      "factor": "Cloud migration moved the control boundary without moving the obligation",
+      "severity": "high",
+      "dimension": "environment",
+      "drivenBy": [
+        "Cloud infrastructure",
+        "Core trading and order management systems",
+        "Recent migration"
+      ],
+      "rationale": "Under the shared responsibility model the provider secures the platform and the firm secures what it puts on it, but the licence obligations sit entirely with the firm. A migration performed under time pressure typically leaves configuration hardening as an open item."
+    },
+    {
+      "id": "rf4",
+      "factor": "Untested recovery on a system with a regulatory downtime cap",
+      "severity": "high",
+      "dimension": "criticality",
+      "drivenBy": [
+        "Business-critical systems",
+        "Exchange and market connectivity",
+        "Disaster recovery not tested, or tests failed"
+      ],
+      "rationale": "MAS caps unscheduled downtime for a critical system, and a recovery plan that has not been exercised is an assumption rather than a control. Market connectivity failure during a trading session has no acceptable degraded mode."
+    },
+    {
+      "id": "rf5",
+      "factor": "Customer personal data processed outside Singapore without evidenced transfer conditions",
+      "severity": "medium",
+      "dimension": "data",
+      "drivenBy": [
+        "Customer personal data",
+        "Data held or processed overseas",
+        "Cloud infrastructure"
+      ],
+      "rationale": "Transferring personal data overseas requires the firm to satisfy itself the recipient offers comparable protection. A cloud region selected for latency or cost is unlikely to have been assessed against that test."
+    },
+    {
+      "id": "rf6",
+      "factor": "Access recertification has lapsed across the estate",
+      "severity": "medium",
+      "dimension": "controls",
+      "drivenBy": [
+        "User access reviews overdue",
+        "Remote and mobile access"
+      ],
+      "rationale": "Overdue recertification means leavers and movers accumulate entitlements nobody has confirmed they still need. Combined with remote access this widens the window in which a dormant account can be used without being noticed."
+    }
+  ],
+  "obligations": [
+    {
+      "id": "ob1",
+      "reference": "MAS TRM Guidelines — Access Control",
+      "requirement": "Grant access on a need-to-have basis, enforce accountability for privileged accounts, and review user access rights periodically.",
+      "theme": "privileged-access",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    },
+    {
+      "id": "ob2",
+      "reference": "MAS Notice on Cyber Hygiene — Administrative Accounts",
+      "requirement": "Restrict administrative accounts to authorised persons, and ensure they are not used for routine activity.",
+      "theme": "privileged-access",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/notices"
+    },
+    {
+      "id": "ob3",
+      "reference": "MAS Notice on Cyber Hygiene — Security Patches",
+      "requirement": "Apply security patches to address vulnerabilities to every system, within a timeframe commensurate with the risk posed.",
+      "theme": "vulnerability",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/notices"
+    },
+    {
+      "id": "ob4",
+      "reference": "MAS TRM Guidelines — Systems Reliability, Availability and Recoverability",
+      "requirement": "Establish recovery objectives for critical systems and validate them through periodic testing that includes a failover to the recovery site.",
+      "theme": "resilience",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    },
+    {
+      "id": "ob5",
+      "reference": "MAS Outsourcing Guidelines — Monitoring and Control",
+      "requirement": "Maintain oversight of material outsourcing arrangements, including the right to audit the service provider and to be notified of incidents affecting the firm.",
+      "theme": "third-party",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/guidelines-on-outsourcing"
+    },
+    {
+      "id": "ob6",
+      "reference": "MAS TRM Guidelines — Cloud Services",
+      "requirement": "Assess and manage the risks of cloud adoption, including the allocation of responsibilities between the firm and the cloud service provider.",
+      "theme": "third-party",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    },
+    {
+      "id": "ob7",
+      "reference": "PDPA — Protection Obligation",
+      "requirement": "Make reasonable security arrangements to protect personal data in the organisation's possession or control.",
+      "theme": "data-protection",
+      "sourceName": "Personal Data Protection Commission",
+      "sourceUrl": "https://www.pdpc.gov.sg/overview-of-pdpa/the-legislation/personal-data-protection-act"
+    },
+    {
+      "id": "ob8",
+      "reference": "PDPA — Transfer Limitation Obligation",
+      "requirement": "Do not transfer personal data outside Singapore unless the recipient is bound by legally enforceable obligations to provide a comparable standard of protection.",
+      "theme": "data-protection",
+      "sourceName": "Personal Data Protection Commission",
+      "sourceUrl": "https://www.pdpc.gov.sg/overview-of-pdpa/the-legislation/personal-data-protection-act"
+    },
+    {
+      "id": "ob9",
+      "reference": "MAS TRM Guidelines — Change Management",
+      "requirement": "Subject changes to production systems to authorisation, testing and approval commensurate with their risk and impact.",
+      "theme": "change-management",
+      "sourceName": "Monetary Authority of Singapore",
+      "sourceUrl": "https://www.mas.gov.sg/regulation/guidelines/technology-risk-management-guidelines"
+    }
+  ],
+  "scopeAreas": [
+    {
+      "id": "sa1",
+      "title": "Privileged and vendor access to the order management platform",
+      "riskRating": "high",
+      "rationale": "Shared administrator credentials held by vendor engineers on a business-critical trading system, with recertification overdue, is the combination most likely to produce an unattributable change during this audit period.",
+      "addressesRiskFactors": [
+        "rf1",
+        "rf2",
+        "rf6"
+      ],
+      "testsObligations": [
+        "ob1",
+        "ob2",
+        "ob5"
+      ],
+      "approved": true,
+      "steps": []
+    },
+    {
+      "id": "sa2",
+      "title": "Vulnerability remediation where the vendor controls the patch window",
+      "riskRating": "high",
+      "rationale": "The firm carries the remediation obligation but not the schedule. This area tests whether the contract and the operating practice actually let the firm meet its own timeframe.",
+      "addressesRiskFactors": [
+        "rf1"
+      ],
+      "testsObligations": [
+        "ob3",
+        "ob5"
+      ],
+      "approved": true,
+      "steps": []
+    },
+    {
+      "id": "sa3",
+      "title": "Cloud configuration and the shared responsibility boundary post-migration",
+      "riskRating": "high",
+      "rationale": "The platform moved in Q2 under a delivery deadline. This area tests whether the firm's half of the responsibility model was hardened and documented, rather than assumed to be the provider's.",
+      "addressesRiskFactors": [
+        "rf3",
+        "rf5"
+      ],
+      "testsObligations": [
+        "ob6",
+        "ob7"
+      ],
+      "approved": true,
+      "steps": []
+    },
+    {
+      "id": "sa4",
+      "title": "Recovery testing for market-connectivity systems",
+      "riskRating": "high",
+      "rationale": "A regulatory downtime cap applies and the recovery plan has not been exercised since the migration changed the topology it was written against.",
+      "addressesRiskFactors": [
+        "rf4"
+      ],
+      "testsObligations": [
+        "ob4"
+      ],
+      "approved": true,
+      "steps": []
+    },
+    {
+      "id": "sa5",
+      "title": "Cross-border processing of customer personal data",
+      "riskRating": "medium",
+      "rationale": "Cloud regions were selected during migration. This area tests whether transfer conditions were assessed before customer data began being processed outside Singapore.",
+      "addressesRiskFactors": [
+        "rf5"
+      ],
+      "testsObligations": [
+        "ob7",
+        "ob8"
+      ],
+      "approved": true,
+      "steps": []
+    },
+    {
+      "id": "sa6",
+      "title": "Change authorisation for frequent production releases",
+      "riskRating": "medium",
+      "rationale": "A continuous deployment cadence on a system executing financial transactions puts weight on automated gates rather than on a change advisory board.",
+      "addressesRiskFactors": [
+        "rf1"
+      ],
+      "testsObligations": [
+        "ob9"
+      ],
+      "approved": true,
+      "steps": []
+    }
+  ],
+  "runs": [
+    {
+      "agent": "risk",
+      "startedAt": "2026-09-11T01:47:54.465Z",
+      "finishedAt": "2026-09-11T01:48:40.465Z",
+      "model": "claude-haiku-4-5",
+      "produced": "6 risk factors across 5 dimensions, from 22 intake selections",
+      "costUsd": 0.0164,
+      "notes": [
+        "Dropped \"End-user computing exposure\" — no mechanism explained."
+      ]
+    },
+    {
+      "agent": "obligations",
+      "startedAt": "2026-09-11T01:47:54.465Z",
+      "finishedAt": "2026-09-11T01:50:38.465Z",
+      "model": "claude-haiku-4-5",
+      "produced": "9 obligations across 6 of 14 themes, from 9 sources",
+      "costUsd": 0.0612,
+      "notes": [
+        "No obligation found for 8 themes: Technology risk governance, Logical access management, Authentication controls, Project and system development, Computer operations, Cyber security operations, Network and perimeter security, Incident management and reporting."
+      ]
+    },
+    {
+      "agent": "scope",
+      "startedAt": "2026-09-11T01:50:38.465Z",
+      "finishedAt": "2026-09-11T01:51:51.465Z",
+      "model": "claude-haiku-4-5",
+      "produced": "6 proposed control areas",
+      "costUsd": 0.0287,
+      "notes": [
+        "Dropped \"IT governance and board reporting\" — it cited no obligation to test against."
+      ]
+    }
+  ]
+}
